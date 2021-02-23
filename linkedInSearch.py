@@ -7,18 +7,24 @@ from lib.autocompleteEntry import AutocompleteEntry
 from lib.exportToExcel import *
 
 
-geo_urn_ids = {'Bavaria': '100545973', 'Baden-Württemberg': '100165017',
-               'North Rhine-Westphalia': '103480659',
-               'France': '105015875', 'Germany': '101282230',
-               'Berlin': '103035651', 'Berlin Region': '90009712',
-               'Bremen': '104836009', 'Bremen Region': '90009717',
-               'Düsseldorf': '104008204', 'Düsseldorf Region': '90009721',
-               'Frankfurt': '106150090', 'Frankfurt Region': '90009714',
-               'Hamburg': '101949806', 'Hamburg Region': '90009725',
-               'Munich': '100477049', 'Munich Region': '90009735',
-               'Stuttgart': '102473731', 'Stuttgart Region': '90009750'}
+geo_urn_ids_filepath = 'resources/geo_urn_ids.txt'
+geo_urn_ids = dict()
+if os.path.isfile(geo_urn_ids_filepath):
+    with open(geo_urn_ids_filepath, encoding='utf-8') as f:
+        geo_kvpairs = f.readlines()
+        for kvpair in geo_kvpairs:
+            key, value = kvpair.split(':')
+            key = key.strip()
+            value = value.strip()
+            geo_urn_ids[key] = value
 
 company_public_ids_filepath = 'resources/Company_public_IDs.txt'
+company_public_ids = []
+if os.path.isfile(company_public_ids_filepath):
+    with open(company_public_ids_filepath, encoding='utf-8') as f:
+        public_ids = f.readlines()
+        for id in public_ids:
+            company_public_ids.append(id)
 
 top = Tk()
 top.title("Linkedin Search")
@@ -197,7 +203,7 @@ entry_keywords.pack(side=LEFT, expand=True, fill="x")
 
 label_locations = Label(search_frame1, text="Locations")
 label_locations.pack(side=LEFT, expand=False)
-entry_locations = AutocompleteEntry(geo_urn_ids.keys(), search_frame1, bd=5, text="Germany ", width=50)
+entry_locations = AutocompleteEntry(geo_urn_ids.keys(), search_frame1, bd=5, width=50)
 entry_locations.pack(side=LEFT, expand=False)
 
 # Search filters 2
@@ -210,12 +216,6 @@ entry_keywords_title.pack(side=LEFT, expand=True, fill="x")
 
 label_companies = Label(search_frame2, text="Company public ID(s)")
 label_companies.pack(side=LEFT, expand=False)
-company_public_ids = []
-if os.path.isfile(company_public_ids_filepath):
-    with open(company_public_ids_filepath, encoding='utf-8') as f:
-        public_ids = f.readlines()
-        for id in public_ids:
-            company_public_ids.append(id)
 entry_companies = AutocompleteEntry(company_public_ids, search_frame2, bd=5)
 entry_companies.pack(side=LEFT, expand=True, fill="x")
 

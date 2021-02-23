@@ -1,0 +1,19 @@
+Bavaria: 100545973
+Baden-Württemberg: 100165017
+North Rhine-Westphalia: 103480659
+France: 105015875
+Germany: 101282230
+Berlin: 103035651
+Berlin Region: 90009712
+Bremen: 104836009
+Bremen Region: 90009717
+Düsseldorf: 104008204
+Düsseldorf Region: 90009721
+Frankfurt: 106150090
+Frankfurt Region: 90009714
+Hamburg: 101949806
+Hamburg Region: 90009725
+Munich: 100477049
+Munich Region: 90009735
+Stuttgart: 102473731
+Stuttgart Region: 90009750
