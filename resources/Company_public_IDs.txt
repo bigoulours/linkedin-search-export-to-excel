@@ -5,6 +5,7 @@ apple
 bmw-group
 boeing
 bosch
+cisco
 dassaultsystemes
 facebook
 google
@@ -14,5 +15,13 @@ intel-corporation
 microsoft
 nasa
 netflix
+niglobal
 nvidia
+nxp-semiconductors
+rohde-&-schwarz
+samsung-electronics
+sony
+stmicroelectronics
+tesla-motors
+texas-instruments
 zeiss
