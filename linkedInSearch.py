@@ -41,10 +41,10 @@ profile_list_w_skills = []
 this_file_name = os.path.splitext(os.path.basename(__file__))[0]
 
 
-def start_search(username, password, table_object, keywords, company_names, keywords_title, locations):
-    nb_columns = table_object.grid_size()[0]
+def start_search(username, password, keywords, company_names, keywords_title, locations):
+    nb_columns = table_frame.grid_size()[0]
     # removing all cells from table (except headers)
-    for cell in table_object.grid_slaves()[:-nb_columns]:
+    for cell in table_frame.grid_slaves()[:-nb_columns]:
         cell.grid_forget()
 
     # Authenticate using any Linkedin account credentials
@@ -107,11 +107,11 @@ def start_search(username, password, table_object, keywords, company_names, keyw
                 else:
                     geolocation = company['confirmedLocations'][0]['city']
 
-                Label(table_object, text=profile['experience'][0]['companyName'], bg="white", relief=GROOVE, borderwidth=1).grid(row=row, column=0, sticky=EW)
-                Label(table_object, text=geolocation, bg="white", relief=GROOVE, borderwidth=1).grid(row=row, column=1, sticky=EW)
-                Label(table_object, text=profile['lastName'], bg="white", relief=GROOVE, borderwidth=1).grid(row=row, column=2, sticky=EW)
-                Label(table_object, text=profile['firstName'], bg="white", relief=GROOVE, borderwidth=1).grid(row=row, column=3, sticky=EW)
-                Label(table_object, text=profile['headline'], bg="white", relief=GROOVE, borderwidth=1).grid(row=row, column=4, sticky=EW)
+                Label(table_frame, text=profile['experience'][0]['companyName'], bg="white", relief=GROOVE, borderwidth=1).grid(row=row, column=0, sticky=EW)
+                Label(table_frame, text=geolocation, bg="white", relief=GROOVE, borderwidth=1).grid(row=row, column=1, sticky=EW)
+                Label(table_frame, text=profile['lastName'], bg="white", relief=GROOVE, borderwidth=1).grid(row=row, column=2, sticky=EW)
+                Label(table_frame, text=profile['firstName'], bg="white", relief=GROOVE, borderwidth=1).grid(row=row, column=3, sticky=EW)
+                Label(table_frame, text=profile['headline'], bg="white", relief=GROOVE, borderwidth=1).grid(row=row, column=4, sticky=EW)
                 status_str.set("Scanned " + str(row) + " out of " + str(result_size) + " profiles")
                 top.update()
                 row += 1
@@ -126,12 +126,12 @@ def start_search(username, password, table_object, keywords, company_names, keyw
         print("Error: " + repr(e))
 
 
-def create_start_search_thread(username, password, table_object, keywords, company_names, keywords_title, locations):
+def create_start_search_thread(username, password, keywords, company_names, keywords_title, locations):
     global search_thread
     if 'search_thread' in globals() and search_thread.is_alive():
         messagebox.showinfo("Search in progress", "Another search is still running.\nWait until it finishes or restart the program.")
         return
-    search_thread = threading.Thread(target=start_search, args=(username, password, table_object, keywords, company_names, keywords_title, locations))
+    search_thread = threading.Thread(target=start_search, args=(username, password, keywords, company_names, keywords_title, locations))
     search_thread.daemon = True
     search_thread.start()
 
@@ -224,7 +224,7 @@ btn_frame = Frame(top)
 btn_frame.pack(padx=10, pady=10, side=TOP, fill="x")
 start_search_btn = Button(btn_frame, text="Search Now!")
 start_search_btn.pack(side=LEFT)
-start_search_btn['command'] = lambda: create_start_search_thread(entry_usr.get(), entry_pwd.get(), table_frame,
+start_search_btn['command'] = lambda: create_start_search_thread(entry_usr.get(), entry_pwd.get(),
                                                    entry_keywords.get(), entry_companies.get(), entry_keywords_title.get(),
                                                    [geo_urn_ids[x] for x in entry_locations.get().split() if x in geo_urn_ids.keys()])
 export_to_xsl_btn = Button(btn_frame, text="Export to Excel", state="disabled")
