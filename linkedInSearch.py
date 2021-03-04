@@ -42,59 +42,62 @@ this_file_name = os.path.splitext(os.path.basename(__file__))[0]
 
 
 def start_search(username, password, keywords, company_names, keywords_title, locations):
-    nb_columns = table_frame.grid_size()[0]
-    # removing all cells from table (except headers)
-    for cell in table_frame.grid_slaves()[:-nb_columns]:
-        cell.grid_forget()
-
-    # Authenticate using any Linkedin account credentials
     try:
-        api = Linkedin(username, password)
-        with open(this_file_name + '_login', 'w') as f:
-            f.write(username)
-        status_str.set("Login successful!")
-        top.update()
-        profile_list_w_skills.clear()
-        export_to_xsl_btn.configure(state="disabled")
-    except Exception as e:
-        print("Error: " + repr(e))
-        messagebox.showinfo("Error", "Login failed!\nCheck username and password.\n2FA must be disabled in LinkedIn settings.")
-        return
+        nb_columns = table_frame.grid_size()[0]
+        # removing all cells from table (except headers)
+        for cell in table_frame.grid_slaves()[:-nb_columns]:
+            cell.grid_forget()
 
-    if company_names != "":
-        companyIDs = []
-        for company_name in company_names.split():
-            try:
-                company = api.get_company(company_name)
-                companyIDs.append(company['entityUrn'].split(":")[-1])
-            except Exception as e:
-                answer_is_yes = messagebox.askyesno("Warning", "No company found with public ID " + company_name +
-                                                    "\nLook for the public ID of the company on LinkedIn:\n"
-                                                    "https://www.linkedin.com/company/<public ID>\n\n Ignore and proceed anyway?")
-                if not answer_is_yes:
-                    status_str.set("Search cancelled.")
-                    top.update()
-                    return
-    else:
-        companyIDs = None
-
-    # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
-    search_result = api.search_people(keywords=keywords, current_company=companyIDs, regions=locations,
-                                      keyword_title=keywords_title, include_private_profiles=False)
-    result_size = len(search_result)
-    print("Found " + str(result_size) + " results! Searching contact details... This can take a while...")
-    status_str.set("Found " + str(result_size) + " results! Searching contact details... This can take a while...")
-    top.update()
-
-    if result_size > 999:
-        answer_is_yes = messagebox.askyesno("Too many results!", "This search yields more than 1000 results (upper limit for this app).\nProceed anyway?")
-        if not answer_is_yes:
-            status_str.set("Search cancelled.")
+        # Authenticate using any Linkedin account credentials
+        try:
+            api = Linkedin(username, password)
+            with open(this_file_name + '_login', 'w') as f:
+                f.write(username)
+            status_str.set("Login successful!")
             top.update()
+            profile_list_w_skills.clear()
+            export_to_xsl_btn.configure(state="disabled")
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print("Error: " + repr(e) + " in " + str(fname) + " line " + str(exc_tb.tb_lineno) + "\n")
+            messagebox.showinfo("Error", "Login failed!\nCheck username and password.\n2FA must be disabled in LinkedIn settings.")
             return
 
-    row = 1
-    try:
+        if company_names != "":
+            companyIDs = []
+            for company_name in company_names.split():
+                try:
+                    company = api.get_company(company_name)
+                    companyIDs.append(company['entityUrn'].split(":")[-1])
+                except Exception as e:
+                    answer_is_yes = messagebox.askyesno("Warning", "No company found with public ID " + company_name +
+                                                        "\nLook for the public ID of the company on LinkedIn:\n"
+                                                        "https://www.linkedin.com/company/<public ID>\n\n Ignore and proceed anyway?")
+                    if not answer_is_yes:
+                        status_str.set("Search cancelled.")
+                        top.update()
+                        return
+        else:
+            companyIDs = None
+
+        # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
+        search_result = api.search_people(keywords=keywords, current_company=companyIDs, regions=locations,
+                                          keyword_title=keywords_title, include_private_profiles=False)
+        result_size = len(search_result)
+        print("Found " + str(result_size) + " results! Searching contact details... This can take a while...")
+        status_str.set("Found " + str(result_size) + " results! Searching contact details... This can take a while...")
+        top.update()
+
+        if result_size > 999:
+            answer_is_yes = messagebox.askyesno("Too many results!", "This search yields more than 1000 results (upper limit for this app).\nProceed anyway?")
+            if not answer_is_yes:
+                status_str.set("Search cancelled.")
+                top.update()
+                return
+
+        row = 1
+
         for people in search_result:
             profile = api.get_profile(urn_id=people['urn_id'])
             if profile != {}:
@@ -121,9 +124,11 @@ def start_search(username, password, keywords, company_names, keywords_title, lo
         status_str.set("Done")
         top.update()
     except Exception as e:
-        status_str.set("An error occurred! See console output for more details.")
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print("Error: " + repr(e) + " in " + str(fname) + " line " + str(exc_tb.tb_lineno) + "\n")
+        status_str.set("ASomething went wrong! Check console output for more details.")
         top.update()
-        print("Error: " + repr(e))
 
 
 def create_start_search_thread(username, password, keywords, company_names, keywords_title, locations):
