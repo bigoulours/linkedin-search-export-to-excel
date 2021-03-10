@@ -2,6 +2,7 @@ from linkedin_api import Linkedin
 from tkinter import *
 from tkinter import messagebox, ttk
 import os
+import sys
 import threading
 from lib.autocompleteEntry import AutocompleteEntry
 from lib.exportToExcel import *
