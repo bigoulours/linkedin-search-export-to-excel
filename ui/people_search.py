@@ -43,6 +43,8 @@ class PeopleSearch:
 
         self.parent = tk_parent
 
+        self.search_results_df = pd.DataFrame()
+
         # Paned Window
         self.search_frame = ttk.PanedWindow(tk_parent, orient='horizontal')
         self.search_frame.pack(side='top', fill="both", expand=True, padx=10)
@@ -54,26 +56,26 @@ class PeopleSearch:
         search_fields1.pack(padx=10, pady=5, side='top', fill="x")
         label_keywords = ttk.Label(search_fields1, text="Keywords")
         label_keywords.pack(side='left', expand=False)
-        entry_keywords = ttk.Entry(search_fields1)
-        entry_keywords.pack(side='left', expand=True, fill="x")
+        self.entry_keywords = ttk.Entry(search_fields1)
+        self.entry_keywords.pack(side='left', expand=True, fill="x")
 
         label_locations = ttk.Label(search_fields1, text="Locations")
         label_locations.pack(side='left', expand=False)
-        entry_locations = AutocompleteEntry(geo_urn_ids.keys(), search_fields1, width=50)
-        entry_locations.pack(side='left', expand=False)
+        self.entry_locations = AutocompleteEntry(geo_urn_ids.keys(), search_fields1, width=50)
+        self.entry_locations.pack(side='left', expand=False)
 
         # Search filters 2
         search_fields2 = ttk.Frame(search_fields_frame)
         search_fields2.pack(padx=10, pady=5, side='top', fill="x")
         label_keywords_title = ttk.Label(search_fields2, text="Keywords Title")
         label_keywords_title.pack(side='left', expand=False)
-        entry_keywords_title = ttk.Entry(search_fields2)
-        entry_keywords_title.pack(side='left', expand=True, fill="x")
+        self.entry_keywords_title = ttk.Entry(search_fields2)
+        self.entry_keywords_title.pack(side='left', expand=True, fill="x")
 
         label_companies = ttk.Label(search_fields2, text="Company public ID(s)")
         label_companies.pack(side='left', expand=False)
-        entry_companies = AutocompleteEntry(company_public_ids, search_fields2)
-        entry_companies.pack(side='left', expand=True, fill="x")
+        self.entry_companies = AutocompleteEntry(company_public_ids, search_fields2)
+        self.entry_companies.pack(side='left', expand=True, fill="x")
 
         self.search_frame.add(search_fields_frame)
 
@@ -95,8 +97,7 @@ class PeopleSearch:
         btn_frame.pack(padx=10, pady=10, side='top', fill="x")
         start_search_btn = ttk.Button(btn_frame, text="Search Now!")
         start_search_btn.pack(side='left')
-        start_search_btn['command'] = lambda: self.create_start_search_thread(entry_keywords.get(), entry_companies.get(), entry_keywords_title.get(),
-                                                        [geo_urn_ids[x] for x in entry_locations.get().split() if x in geo_urn_ids.keys()])
+        start_search_btn['command'] = self.create_start_search_thread
         self.export_to_file_btn = ttk.Button(btn_frame, text="Export to File", state="disabled")
         self.export_to_file_btn.pack(side='right')
         self.export_to_file_btn['command'] = self.prepare_dataframe_and_save_to_xsl
@@ -111,7 +112,11 @@ class PeopleSearch:
         separator = ttk.Separator(tk_parent, orient='horizontal')
         separator.pack(side='bottom', fill='x')
 
-    def start_search(self, keywords, company_names, keywords_title, locations):
+    def start_search(self):
+        keywords = self.entry_keywords.get()
+        company_names = self.entry_companies.get()
+        keywords_title = self.entry_keywords_title.get()
+        locations = [geo_urn_ids[x] for x in self.entry_locations.get().split() if x in geo_urn_ids.keys()]
         try:
             nb_columns = self.table_frame.grid_size()[0]
             # removing all cells from table (except headers)
@@ -199,12 +204,12 @@ class PeopleSearch:
             self.parent.update()
 
 
-    def create_start_search_thread(self, keywords, company_names, keywords_title, locations):
+    def create_start_search_thread(self):
         global search_thread
         if 'search_thread' in globals() and search_thread.is_alive():
             messagebox.showinfo("Search in progress", "Another search is still running.\nWait until it finishes or restart the program.")
             return
-        search_thread = threading.Thread(target=self.start_search, args=(keywords, company_names, keywords_title, locations))
+        search_thread = threading.Thread(target=self.start_search)
         search_thread.daemon = True
         search_thread.start()
 
