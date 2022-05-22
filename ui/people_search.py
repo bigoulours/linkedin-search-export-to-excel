@@ -8,7 +8,6 @@ except:
     import utils
 from tkinter import messagebox
 import os
-import sys
 import threading
 import pandas as pd
 from pandastable import Table, TableModel
@@ -49,31 +48,57 @@ class PeopleSearch:
 
         search_fields_frame = ttk.Frame(self.search_frame)
 
-        # Search filters 1
-        search_fields1 = ttk.Frame(search_fields_frame)
-        search_fields1.pack(padx=10, pady=5, side='top', fill="x")
-        label_keywords = ttk.Label(search_fields1, text="Keywords")
+        # Connections
+        conn_frame = ttk.Frame(search_fields_frame)
+        conn_frame.pack(pady=5, side='top', fill='x')
+        label_conn = ttk.Label(conn_frame, text="Connections")
+        label_conn.pack(side='left', expand=False)
+        self.first_con = ttk.BooleanVar()
+        chckbox_first_con = ttk.Checkbutton(conn_frame, text="1st",
+                                                    variable=self.first_con, bootstyle="primary")                                
+        chckbox_first_con.pack(side='left', padx=10)
+
+        self.second_con = ttk.BooleanVar()
+        chckbox_second_con = ttk.Checkbutton(conn_frame, text="2nd",
+                                                    variable=self.second_con, bootstyle="primary")                                
+        chckbox_second_con.pack(side='left', padx=10)
+
+        self.third_con = ttk.BooleanVar()
+        chckbox_third_con = ttk.Checkbutton(conn_frame, text="3rd+",
+                                                    variable=self.third_con, bootstyle="primary")                                
+        chckbox_third_con.pack(side='left', padx=10)
+
+        # KW-Frame
+        kw_frame = ttk.Frame(search_fields_frame)
+        kw_frame.pack(pady=5, side='top', fill="x")
+        label_keywords = ttk.Label(kw_frame, text="Keywords")
         label_keywords.pack(side='left', expand=False)
-        self.entry_keywords = ttk.Entry(search_fields1)
-        self.entry_keywords.pack(side='left', expand=True, fill="x")
+        self.entry_keywords = ttk.Entry(kw_frame)
+        self.entry_keywords.pack(side='left', expand=True, fill="x", padx=10)
 
-        label_locations = ttk.Label(search_fields1, text="Locations")
-        label_locations.pack(side='left', expand=False)
-        self.entry_locations = AutocompleteEntry(geo_urn_ids.keys(), search_fields1, width=50)
-        self.entry_locations.pack(side='left', expand=False)
-
-        # Search filters 2
-        search_fields2 = ttk.Frame(search_fields_frame)
-        search_fields2.pack(padx=10, pady=5, side='top', fill="x")
-        label_keywords_title = ttk.Label(search_fields2, text="Keywords Title")
+        # KW-Title-Frame
+        kw_title_frame = ttk.Frame(search_fields_frame)
+        kw_title_frame.pack(pady=5, side='top', fill="x")
+        label_keywords_title = ttk.Label(kw_title_frame, text="Keywords Title")
         label_keywords_title.pack(side='left', expand=False)
-        self.entry_keywords_title = ttk.Entry(search_fields2)
-        self.entry_keywords_title.pack(side='left', expand=True, fill="x")
+        self.entry_keywords_title = ttk.Entry(kw_title_frame)
+        self.entry_keywords_title.pack(side='left', expand=True, fill="x", padx=10)
 
-        label_companies = ttk.Label(search_fields2, text="Company public ID(s)")
+        # Location Frame
+        loc_frame = ttk.Frame(search_fields_frame)
+        loc_frame.pack(pady=5, side='top', fill="x")
+        label_locations = ttk.Label(loc_frame, text="Locations")
+        label_locations.pack(side='left', expand=False)
+        self.entry_locations = AutocompleteEntry(geo_urn_ids.keys(), loc_frame, width=50)
+        self.entry_locations.pack(side='left', expand=False, padx=10)
+
+        # Companies frame
+        comp_frame = ttk.Frame(search_fields_frame)
+        comp_frame.pack(pady=5, side='top', fill="x")
+        label_companies = ttk.Label(comp_frame, text="Company public ID(s)")
         label_companies.pack(side='left', expand=False)
-        self.entry_companies = AutocompleteEntry(company_public_ids, search_fields2)
-        self.entry_companies.pack(side='left', expand=True, fill="x")
+        self.entry_companies = AutocompleteEntry(company_public_ids, comp_frame)
+        self.entry_companies.pack(side='left', expand=True, fill="x", padx=10)
 
         self.search_frame.add(search_fields_frame)
 
@@ -124,6 +149,13 @@ class PeopleSearch:
         company_names = self.entry_companies.get()
         keywords_title = self.entry_keywords_title.get()
         locations = [geo_urn_ids[x] for x in self.entry_locations.get().split() if x in geo_urn_ids.keys()]
+        network_depths = []
+        if self.first_con.get():
+            network_depths.append('F')
+        if self.second_con.get():
+            network_depths.append('S')
+        if self.third_con.get():
+            network_depths.append('O')
         try:
             # Authenticate using any Linkedin account credentials
             try:
@@ -156,7 +188,7 @@ class PeopleSearch:
 
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
             # todo: don't hard code network depth
-            search_result = api.search_people(keywords=keywords, network_depths=['F'], current_company=companyIDs, regions=locations,
+            search_result = api.search_people(keywords=keywords, network_depths=network_depths, current_company=companyIDs, regions=locations,
                                             keyword_title=keywords_title, include_private_profiles=False)
             result_size = len(search_result)
             print("Found " + str(result_size) + " results! Searching contact details... This can take a while...")
