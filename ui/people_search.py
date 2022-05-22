@@ -1,10 +1,10 @@
 import ttkbootstrap as ttk
-from linkedin_api import Linkedin
+from linkedin_api import Linkedin  #todo: import as submodule (otherwise network_depths not working)
 try:
-    from .autocompleteEntry import AutocompleteEntry
+    from .autocompleteEntry import AutocompleteCombobox
     from . import utils
 except:
-    from autocompleteEntry import AutocompleteEntry
+    from autocompleteEntry import AutocompleteCombobox
     import utils
 from tkinter import messagebox
 import os
@@ -87,17 +87,19 @@ class PeopleSearch:
         # Location Frame
         loc_frame = ttk.Frame(search_fields_frame)
         loc_frame.pack(pady=5, side='top', fill="x")
-        label_locations = ttk.Label(loc_frame, text="Locations")
+        label_locations = ttk.Label(loc_frame, text="Location")
         label_locations.pack(side='left', expand=False)
-        self.entry_locations = AutocompleteEntry(geo_urn_ids.keys(), loc_frame, width=50)
-        self.entry_locations.pack(side='left', expand=False, padx=10)
+        self.entry_locations = AutocompleteCombobox(loc_frame)
+        self.entry_locations.set_completion_list(geo_urn_ids.keys())
+        self.entry_locations.pack(side='left', expand=True, fill="x", padx=10)
 
         # Companies frame
         comp_frame = ttk.Frame(search_fields_frame)
         comp_frame.pack(pady=5, side='top', fill="x")
-        label_companies = ttk.Label(comp_frame, text="Company public ID(s)")
+        label_companies = ttk.Label(comp_frame, text="Company public ID")
         label_companies.pack(side='left', expand=False)
-        self.entry_companies = AutocompleteEntry(company_public_ids, comp_frame)
+        self.entry_companies = AutocompleteCombobox(comp_frame)
+        self.entry_companies.set_completion_list(company_public_ids)
         self.entry_companies.pack(side='left', expand=True, fill="x", padx=10)
 
         self.search_frame.add(search_fields_frame)
@@ -187,11 +189,9 @@ class PeopleSearch:
                 companyIDs = None
 
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
-            # todo: don't hard code network depth
             search_result = api.search_people(keywords=keywords, network_depths=network_depths, current_company=companyIDs, regions=locations,
                                             keyword_title=keywords_title, include_private_profiles=False)
             result_size = len(search_result)
-            print("Found " + str(result_size) + " results! Searching contact details... This can take a while...")
             self.status_str.set("Found " + str(result_size) + " results! Searching contact details... This can take a while...")
             self.parent.update()
 
@@ -239,7 +239,6 @@ class PeopleSearch:
 
                     row += 1
 
-            print("Done")
             self.export_to_file_btn.configure(state="normal")
             self.status_str.set("Done")
             self.parent.update()
