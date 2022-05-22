@@ -6,7 +6,6 @@ try:
 except:
     from autocompleteEntry import AutocompleteEntry
     import utils
-from tkinter import Scrollbar
 from tkinter import messagebox
 import os
 import sys
@@ -14,7 +13,6 @@ import threading
 import pandas as pd
 from pandastable import Table, TableModel
 
-profile_list_w_skills = []
 
 geo_urn_ids_filepath = 'resources/geo_urn_ids.txt'
 geo_urn_ids = dict()
@@ -95,11 +93,20 @@ class PeopleSearch:
         # Buttons frame
         btn_frame = ttk.Frame(tk_parent)
         btn_frame.pack(padx=10, pady=10, side='top', fill="x")
+
         start_search_btn = ttk.Button(btn_frame, text="Search Now!")
         start_search_btn.pack(side='left')
         start_search_btn['command'] = self.create_start_search_thread
+
+        btn_sub_frame = ttk.Frame(btn_frame)
+        btn_sub_frame.pack(side="left", fill="none", expand=True)
+        self.get_skills = ttk.BooleanVar()
+        chckbox_get_skills = ttk.Checkbutton(btn_sub_frame, text="Get skills",
+                                                    variable=self.get_skills, bootstyle="primary")                                
+        chckbox_get_skills.pack(side='top')
+
         self.export_to_file_btn = ttk.Button(btn_frame, text="Export to File", state="disabled")
-        self.export_to_file_btn.pack(side='right')
+        self.export_to_file_btn.pack(side='left')
         self.export_to_file_btn['command'] = self.prepare_dataframe_and_save_to_xsl
 
         # Status frame
@@ -118,22 +125,15 @@ class PeopleSearch:
         keywords_title = self.entry_keywords_title.get()
         locations = [geo_urn_ids[x] for x in self.entry_locations.get().split() if x in geo_urn_ids.keys()]
         try:
-            nb_columns = self.table_frame.grid_size()[0]
-            # removing all cells from table (except headers)
-            for cell in self.table_frame.grid_slaves()[:-nb_columns]:
-                cell.grid_forget()
-
             # Authenticate using any Linkedin account credentials
             try:
                 api = Linkedin(self.entry_usr.get(), self.entry_pwd.get())
                 self.status_str.set("Login successful!")
                 self.parent.update()
-                profile_list_w_skills.clear()
+                self.search_results_df = pd.DataFrame()
                 self.export_to_file_btn.configure(state="disabled")
             except Exception as e:
-                exc_type, exc_obj, exc_tb = sys.exc_info()
-                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                print("Error: " + repr(e) + " in " + str(fname) + " line " + str(exc_tb.tb_lineno) + "\n")
+                utils.show_exception(e)
                 messagebox.showinfo("Error", "Login failed!\nCheck username and password.\n2FA must be disabled in LinkedIn settings.")
                 return
 
@@ -155,7 +155,8 @@ class PeopleSearch:
                 companyIDs = None
 
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
-            search_result = api.search_people(keywords=keywords, current_company=companyIDs, regions=locations,
+            # todo: don't hard code network depth
+            search_result = api.search_people(keywords=keywords, network_depths=['F'], current_company=companyIDs, regions=locations,
                                             keyword_title=keywords_title, include_private_profiles=False)
             result_size = len(search_result)
             print("Found " + str(result_size) + " results! Searching contact details... This can take a while...")
@@ -174,33 +175,45 @@ class PeopleSearch:
             for people in search_result:
                 profile = api.get_profile(urn_id=people['urn_id'])
                 if profile != {}:
-                    skills_raw = api.get_profile_skills(urn_id=people['urn_id'])
-                    skills = []
-                    for dict in skills_raw:
-                        skills.append(dict['name'])
                     if 'geoLocationName' in profile.keys():
                         geolocation = profile['geoLocationName']
-                    else:
+                    elif 'confirmedLocations' in company:
                         geolocation = company['confirmedLocations'][0]['city']
+                    else:
+                        geolocation = ""
 
-                    ttk.Label(self.table_frame, text=profile['experience'][0]['companyName'], bg="white", relief='groove', borderwidth=1).grid(row=row, column=0, sticky='ew')
-                    ttk.Label(self.table_frame, text=geolocation, bg="white", relief='groove', borderwidth=1).grid(row=row, column=1, sticky='ew')
-                    ttk.Label(self.table_frame, text=profile['lastName'], bg="white", relief='groove', borderwidth=1).grid(row=row, column=2, sticky='ew')
-                    ttk.Label(self.table_frame, text=profile['firstName'], bg="white", relief='groove', borderwidth=1).grid(row=row, column=3, sticky='ew')
-                    ttk.Label(self.table_frame, text=profile['headline'], bg="white", relief='groove', borderwidth=1).grid(row=row, column=4, sticky='ew')
+                    profile_dict = {
+                        'First Name': [profile['firstName']],
+                        'Last Name': [profile['lastName']],
+                        'Title': [profile['experience'][0]['title']],
+                        'Company': [profile['experience'][0]['companyName']],
+                        'Location': [geolocation],
+                        'Headline': [profile['headline']],
+                        'Profile Link': ['https://www.linkedin.com/in/' + profile['profile_id']]
+                    }
+
+                    if self.get_skills.get():
+                        skills_raw = api.get_profile_skills(urn_id=people['urn_id'])
+                        skills = [dic['name'] for dic in skills_raw]
+                        profile_dict.update({'Skills': [skills]})
+
+                    self.search_results_df = pd.concat([self.search_results_df,
+                                                pd.DataFrame(profile_dict)])
+
+                    self.table.updateModel(TableModel(self.search_results_df))
+                    self.table.redraw()
                     self.status_str.set("Scanned " + str(row) + " out of " + str(result_size) + " profiles")
                     self.parent.update()
+
                     row += 1
-                    profile_list_w_skills.append((profile, skills))
+
             print("Done")
             self.export_to_file_btn.configure(state="normal")
             self.status_str.set("Done")
             self.parent.update()
         except Exception as e:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            print("Error: " + repr(e) + " in " + str(fname) + " line " + str(exc_tb.tb_lineno) + "\n")
-            self.status_str.set("ASomething went wrong! Check console output for more details.")
+            utils.show_exception(e)
+            self.status_str.set("Something went wrong! Check console output for more details.")
             self.parent.update()
 
 
@@ -216,34 +229,7 @@ class PeopleSearch:
 
     def prepare_dataframe_and_save_to_xsl(self):
         self.status_str.set("Exporting to File...")
-        companies = []
-        locations = []
-        last_names = []
-        first_names = []
-        headlines = []
-        titles = []
-        linkedin_pages = []
-        skills_list = []
-        for (profile, skills) in profile_list_w_skills:
-            if 'geoLocationName' in profile.keys():
-                geolocation = profile['geoLocationName']
-            else:
-                geolocation = ""
-            companies.append(profile['experience'][0]['companyName'])
-            locations.append(geolocation)
-            last_names.append(profile['lastName'])
-            first_names.append(profile['firstName'])
-            headlines.append(profile['headline'])
-            titles.append(profile['experience'][0]['title'])
-            linkedin_pages.append('https://www.linkedin.com/in/' + profile['profile_id'])
-            skills_list.append(', '.join(skills))
-
-        # create dataframe
-        data_frame_for_export = pd.DataFrame({'Company': companies, 'Location': locations, 'Last Name': last_names,
-                                            'First Name': first_names, 'Headline': headlines, 'Title': titles,
-                                            'LinkedIn Page': linkedin_pages, 'Skills': skills_list})
-
-        export_file = utils.save_dataframe_to_file(data_frame_for_export)
+        export_file = utils.save_dataframe_to_file(self.search_results_df)
 
         if export_file is not None:
             self.status_str.set("Table saved under " + export_file)
@@ -255,7 +241,6 @@ if __name__ == "__main__":
     root = ttk.Window()
     root.title("SWFEAT vs Epics")
     root.geometry("1280x720")
-    root.resizable(width=True, height=True)
 
     # Login frame
     login_frame = ttk.Frame(root)
