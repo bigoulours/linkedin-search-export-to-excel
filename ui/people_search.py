@@ -12,7 +12,7 @@ import os
 import sys
 import threading
 import pandas as pd
-import pandastable
+from pandastable import Table, TableModel
 
 profile_list_w_skills = []
 
@@ -43,31 +43,52 @@ class PeopleSearch:
 
         self.parent = tk_parent
 
+        # Paned Window
+        self.search_frame = ttk.PanedWindow(tk_parent, orient='horizontal')
+        self.search_frame.pack(side='top', fill="both", expand=True, padx=10)
+
+        search_fields_frame = ttk.Frame(self.search_frame)
+
         # Search filters 1
-        search_frame1 = ttk.Frame(tk_parent)
-        search_frame1.pack(padx=10, pady=5, side='top', fill="x")
-        label_keywords = ttk.Label(search_frame1, text="Keywords")
+        search_fields1 = ttk.Frame(search_fields_frame)
+        search_fields1.pack(padx=10, pady=5, side='top', fill="x")
+        label_keywords = ttk.Label(search_fields1, text="Keywords")
         label_keywords.pack(side='left', expand=False)
-        entry_keywords = ttk.Entry(search_frame1)
+        entry_keywords = ttk.Entry(search_fields1)
         entry_keywords.pack(side='left', expand=True, fill="x")
 
-        label_locations = ttk.Label(search_frame1, text="Locations")
+        label_locations = ttk.Label(search_fields1, text="Locations")
         label_locations.pack(side='left', expand=False)
-        entry_locations = AutocompleteEntry(geo_urn_ids.keys(), search_frame1, width=50)
+        entry_locations = AutocompleteEntry(geo_urn_ids.keys(), search_fields1, width=50)
         entry_locations.pack(side='left', expand=False)
 
         # Search filters 2
-        search_frame2 = ttk.Frame(tk_parent)
-        search_frame2.pack(padx=10, pady=5, side='top', fill="x")
-        label_keywords_title = ttk.Label(search_frame2, text="Keywords Title")
+        search_fields2 = ttk.Frame(search_fields_frame)
+        search_fields2.pack(padx=10, pady=5, side='top', fill="x")
+        label_keywords_title = ttk.Label(search_fields2, text="Keywords Title")
         label_keywords_title.pack(side='left', expand=False)
-        entry_keywords_title = ttk.Entry(search_frame2)
+        entry_keywords_title = ttk.Entry(search_fields2)
         entry_keywords_title.pack(side='left', expand=True, fill="x")
 
-        label_companies = ttk.Label(search_frame2, text="Company public ID(s)")
+        label_companies = ttk.Label(search_fields2, text="Company public ID(s)")
         label_companies.pack(side='left', expand=False)
-        entry_companies = AutocompleteEntry(company_public_ids, search_frame2)
+        entry_companies = AutocompleteEntry(company_public_ids, search_fields2)
         entry_companies.pack(side='left', expand=True, fill="x")
+
+        self.search_frame.add(search_fields_frame)
+
+        # Table frame
+        self.table_main_frame = ttk.Frame(tk_parent)
+        # pandastable
+        self.table_frame = ttk.Frame(self.table_main_frame, bootstyle="secondary", borderwidth=2)
+        self.table_frame.pack(side="top", fill="both", expand=True)
+        self.table = Table(self.table_frame, dataframe=pd.DataFrame(), showtoolbar=False, showstatusbar=True)
+        utils.fit_table_style_to_theme(self.table, ttk.Style())
+        self.table.unbind_all("<Tab>")
+        self.table.unbind_all("<Return>")
+        self.table.show()
+
+        self.search_frame.add(self.table_main_frame)
 
         # Buttons frame
         btn_frame = ttk.Frame(tk_parent)
@@ -79,39 +100,6 @@ class PeopleSearch:
         self.export_to_file_btn = ttk.Button(btn_frame, text="Export to File", state="disabled")
         self.export_to_file_btn.pack(side='right')
         self.export_to_file_btn['command'] = self.prepare_dataframe_and_save_to_xsl
-
-        # Table frame and canvas
-        table_main_frame = ttk.Frame(tk_parent)
-        table_main_frame.pack(padx=10, pady=10, side='top', fill="both", expand=True)
-
-        table_canvas = ttk.Canvas(table_main_frame)
-        self.table_frame = ttk.Frame(table_canvas)
-        scrollbar = Scrollbar(table_main_frame, orient="vertical", command=table_canvas.yview)
-        table_canvas.configure(yscrollcommand=scrollbar.set)
-
-        self.table_frame.bind("<Configure>", lambda e: table_canvas.configure(scrollregion=table_canvas.bbox("all")))
-
-        table_canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
-        table_canvas.create_window((0, 0), window=self.table_frame, anchor='nw')
-
-        self.table_frame.grid_columnconfigure(0, weight=1)
-        self.table_frame.grid_columnconfigure(1, weight=1)
-        self.table_frame.grid_columnconfigure(2, weight=1)
-        self.table_frame.grid_columnconfigure(3, weight=1)
-        self.table_frame.grid_columnconfigure(4, weight=1)
-
-        # Table headers
-        table_header_company=ttk.Label(self.table_frame, relief='groove', text="Company", font="Helvetica 9 bold")
-        table_header_company.grid(row=0, column=0, sticky='ew')
-        table_header_location=ttk.Label(self.table_frame, relief='groove', text="Location", font="Helvetica 9 bold")
-        table_header_location.grid(row=0, column=1, sticky='ew')
-        table_header_last_name=ttk.Label(self.table_frame, relief='groove', text="Last Name", font="Helvetica 9 bold")
-        table_header_last_name.grid(row=0, column=2, sticky='ew')
-        table_header_first_name=ttk.Label(self.table_frame, relief='groove', text="First Name", font="Helvetica 9 bold")
-        table_header_first_name.grid(row=0, column=3, sticky='ew')
-        table_header_first_name=ttk.Label(self.table_frame, relief='groove', text="Headline", font="Helvetica 9 bold")
-        table_header_first_name.grid(row=0, column=4, sticky='ew')
 
         # Status frame
         self.status_frame = ttk.Frame(tk_parent)
