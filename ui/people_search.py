@@ -6,15 +6,13 @@ try:
 except:
     from autocompleteEntry import AutocompleteEntry
     import utils
-from tkinter import Scrollbar
 from tkinter import messagebox
 import os
 import sys
 import threading
 import pandas as pd
-import pandastable
+from pandastable import Table, TableModel
 
-profile_list_w_skills = []
 
 geo_urn_ids_filepath = 'resources/geo_urn_ids.txt'
 geo_urn_ids = dict()
@@ -43,75 +41,73 @@ class PeopleSearch:
 
         self.parent = tk_parent
 
-        # Search filters 1
-        search_frame1 = ttk.Frame(tk_parent)
-        search_frame1.pack(padx=10, pady=5, side='top', fill="x")
-        label_keywords = ttk.Label(search_frame1, text="Keywords")
-        label_keywords.pack(side='left', expand=False)
-        entry_keywords = ttk.Entry(search_frame1)
-        entry_keywords.pack(side='left', expand=True, fill="x")
+        self.search_results_df = pd.DataFrame()
 
-        label_locations = ttk.Label(search_frame1, text="Locations")
+        # Paned Window
+        self.search_frame = ttk.PanedWindow(tk_parent, orient='horizontal')
+        self.search_frame.pack(side='top', fill="both", expand=True, padx=10)
+
+        search_fields_frame = ttk.Frame(self.search_frame)
+
+        # Search filters 1
+        search_fields1 = ttk.Frame(search_fields_frame)
+        search_fields1.pack(padx=10, pady=5, side='top', fill="x")
+        label_keywords = ttk.Label(search_fields1, text="Keywords")
+        label_keywords.pack(side='left', expand=False)
+        self.entry_keywords = ttk.Entry(search_fields1)
+        self.entry_keywords.pack(side='left', expand=True, fill="x")
+
+        label_locations = ttk.Label(search_fields1, text="Locations")
         label_locations.pack(side='left', expand=False)
-        entry_locations = AutocompleteEntry(geo_urn_ids.keys(), search_frame1, width=50)
-        entry_locations.pack(side='left', expand=False)
+        self.entry_locations = AutocompleteEntry(geo_urn_ids.keys(), search_fields1, width=50)
+        self.entry_locations.pack(side='left', expand=False)
 
         # Search filters 2
-        search_frame2 = ttk.Frame(tk_parent)
-        search_frame2.pack(padx=10, pady=5, side='top', fill="x")
-        label_keywords_title = ttk.Label(search_frame2, text="Keywords Title")
+        search_fields2 = ttk.Frame(search_fields_frame)
+        search_fields2.pack(padx=10, pady=5, side='top', fill="x")
+        label_keywords_title = ttk.Label(search_fields2, text="Keywords Title")
         label_keywords_title.pack(side='left', expand=False)
-        entry_keywords_title = ttk.Entry(search_frame2)
-        entry_keywords_title.pack(side='left', expand=True, fill="x")
+        self.entry_keywords_title = ttk.Entry(search_fields2)
+        self.entry_keywords_title.pack(side='left', expand=True, fill="x")
 
-        label_companies = ttk.Label(search_frame2, text="Company public ID(s)")
+        label_companies = ttk.Label(search_fields2, text="Company public ID(s)")
         label_companies.pack(side='left', expand=False)
-        entry_companies = AutocompleteEntry(company_public_ids, search_frame2)
-        entry_companies.pack(side='left', expand=True, fill="x")
+        self.entry_companies = AutocompleteEntry(company_public_ids, search_fields2)
+        self.entry_companies.pack(side='left', expand=True, fill="x")
+
+        self.search_frame.add(search_fields_frame)
+
+        # Table frame
+        self.table_main_frame = ttk.Frame(tk_parent)
+        # pandastable
+        self.table_frame = ttk.Frame(self.table_main_frame, bootstyle="secondary", borderwidth=2)
+        self.table_frame.pack(side="top", fill="both", expand=True)
+        self.table = Table(self.table_frame, dataframe=pd.DataFrame(), showtoolbar=False, showstatusbar=True)
+        utils.fit_table_style_to_theme(self.table, ttk.Style())
+        self.table.unbind_all("<Tab>")
+        self.table.unbind_all("<Return>")
+        self.table.show()
+
+        self.search_frame.add(self.table_main_frame)
 
         # Buttons frame
         btn_frame = ttk.Frame(tk_parent)
         btn_frame.pack(padx=10, pady=10, side='top', fill="x")
+
         start_search_btn = ttk.Button(btn_frame, text="Search Now!")
         start_search_btn.pack(side='left')
-        start_search_btn['command'] = lambda: self.create_start_search_thread(entry_keywords.get(), entry_companies.get(), entry_keywords_title.get(),
-                                                        [geo_urn_ids[x] for x in entry_locations.get().split() if x in geo_urn_ids.keys()])
+        start_search_btn['command'] = self.create_start_search_thread
+
+        btn_sub_frame = ttk.Frame(btn_frame)
+        btn_sub_frame.pack(side="left", fill="none", expand=True)
+        self.get_skills = ttk.BooleanVar()
+        chckbox_get_skills = ttk.Checkbutton(btn_sub_frame, text="Get skills",
+                                                    variable=self.get_skills, bootstyle="primary")                                
+        chckbox_get_skills.pack(side='top')
+
         self.export_to_file_btn = ttk.Button(btn_frame, text="Export to File", state="disabled")
-        self.export_to_file_btn.pack(side='right')
+        self.export_to_file_btn.pack(side='left')
         self.export_to_file_btn['command'] = self.prepare_dataframe_and_save_to_xsl
-
-        # Table frame and canvas
-        table_main_frame = ttk.Frame(tk_parent)
-        table_main_frame.pack(padx=10, pady=10, side='top', fill="both", expand=True)
-
-        table_canvas = ttk.Canvas(table_main_frame)
-        self.table_frame = ttk.Frame(table_canvas)
-        scrollbar = Scrollbar(table_main_frame, orient="vertical", command=table_canvas.yview)
-        table_canvas.configure(yscrollcommand=scrollbar.set)
-
-        self.table_frame.bind("<Configure>", lambda e: table_canvas.configure(scrollregion=table_canvas.bbox("all")))
-
-        table_canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
-        table_canvas.create_window((0, 0), window=self.table_frame, anchor='nw')
-
-        self.table_frame.grid_columnconfigure(0, weight=1)
-        self.table_frame.grid_columnconfigure(1, weight=1)
-        self.table_frame.grid_columnconfigure(2, weight=1)
-        self.table_frame.grid_columnconfigure(3, weight=1)
-        self.table_frame.grid_columnconfigure(4, weight=1)
-
-        # Table headers
-        table_header_company=ttk.Label(self.table_frame, relief='groove', text="Company", font="Helvetica 9 bold")
-        table_header_company.grid(row=0, column=0, sticky='ew')
-        table_header_location=ttk.Label(self.table_frame, relief='groove', text="Location", font="Helvetica 9 bold")
-        table_header_location.grid(row=0, column=1, sticky='ew')
-        table_header_last_name=ttk.Label(self.table_frame, relief='groove', text="Last Name", font="Helvetica 9 bold")
-        table_header_last_name.grid(row=0, column=2, sticky='ew')
-        table_header_first_name=ttk.Label(self.table_frame, relief='groove', text="First Name", font="Helvetica 9 bold")
-        table_header_first_name.grid(row=0, column=3, sticky='ew')
-        table_header_first_name=ttk.Label(self.table_frame, relief='groove', text="Headline", font="Helvetica 9 bold")
-        table_header_first_name.grid(row=0, column=4, sticky='ew')
 
         # Status frame
         self.status_frame = ttk.Frame(tk_parent)
@@ -123,24 +119,21 @@ class PeopleSearch:
         separator = ttk.Separator(tk_parent, orient='horizontal')
         separator.pack(side='bottom', fill='x')
 
-    def start_search(self, keywords, company_names, keywords_title, locations):
+    def start_search(self):
+        keywords = self.entry_keywords.get()
+        company_names = self.entry_companies.get()
+        keywords_title = self.entry_keywords_title.get()
+        locations = [geo_urn_ids[x] for x in self.entry_locations.get().split() if x in geo_urn_ids.keys()]
         try:
-            nb_columns = self.table_frame.grid_size()[0]
-            # removing all cells from table (except headers)
-            for cell in self.table_frame.grid_slaves()[:-nb_columns]:
-                cell.grid_forget()
-
             # Authenticate using any Linkedin account credentials
             try:
                 api = Linkedin(self.entry_usr.get(), self.entry_pwd.get())
                 self.status_str.set("Login successful!")
                 self.parent.update()
-                profile_list_w_skills.clear()
+                self.search_results_df = pd.DataFrame()
                 self.export_to_file_btn.configure(state="disabled")
             except Exception as e:
-                exc_type, exc_obj, exc_tb = sys.exc_info()
-                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                print("Error: " + repr(e) + " in " + str(fname) + " line " + str(exc_tb.tb_lineno) + "\n")
+                utils.show_exception(e)
                 messagebox.showinfo("Error", "Login failed!\nCheck username and password.\n2FA must be disabled in LinkedIn settings.")
                 return
 
@@ -162,7 +155,8 @@ class PeopleSearch:
                 companyIDs = None
 
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
-            search_result = api.search_people(keywords=keywords, current_company=companyIDs, regions=locations,
+            # todo: don't hard code network depth
+            search_result = api.search_people(keywords=keywords, network_depths=['F'], current_company=companyIDs, regions=locations,
                                             keyword_title=keywords_title, include_private_profiles=False)
             result_size = len(search_result)
             print("Found " + str(result_size) + " results! Searching contact details... This can take a while...")
@@ -181,76 +175,61 @@ class PeopleSearch:
             for people in search_result:
                 profile = api.get_profile(urn_id=people['urn_id'])
                 if profile != {}:
-                    skills_raw = api.get_profile_skills(urn_id=people['urn_id'])
-                    skills = []
-                    for dict in skills_raw:
-                        skills.append(dict['name'])
                     if 'geoLocationName' in profile.keys():
                         geolocation = profile['geoLocationName']
-                    else:
+                    elif 'confirmedLocations' in company:
                         geolocation = company['confirmedLocations'][0]['city']
+                    else:
+                        geolocation = ""
 
-                    ttk.Label(self.table_frame, text=profile['experience'][0]['companyName'], bg="white", relief='groove', borderwidth=1).grid(row=row, column=0, sticky='ew')
-                    ttk.Label(self.table_frame, text=geolocation, bg="white", relief='groove', borderwidth=1).grid(row=row, column=1, sticky='ew')
-                    ttk.Label(self.table_frame, text=profile['lastName'], bg="white", relief='groove', borderwidth=1).grid(row=row, column=2, sticky='ew')
-                    ttk.Label(self.table_frame, text=profile['firstName'], bg="white", relief='groove', borderwidth=1).grid(row=row, column=3, sticky='ew')
-                    ttk.Label(self.table_frame, text=profile['headline'], bg="white", relief='groove', borderwidth=1).grid(row=row, column=4, sticky='ew')
+                    profile_dict = {
+                        'First Name': [profile['firstName']],
+                        'Last Name': [profile['lastName']],
+                        'Title': [profile['experience'][0]['title']],
+                        'Company': [profile['experience'][0]['companyName']],
+                        'Location': [geolocation],
+                        'Headline': [profile['headline']],
+                        'Profile Link': ['https://www.linkedin.com/in/' + profile['profile_id']]
+                    }
+
+                    if self.get_skills.get():
+                        skills_raw = api.get_profile_skills(urn_id=people['urn_id'])
+                        skills = [dic['name'] for dic in skills_raw]
+                        profile_dict.update({'Skills': [skills]})
+
+                    self.search_results_df = pd.concat([self.search_results_df,
+                                                pd.DataFrame(profile_dict)])
+
+                    self.table.updateModel(TableModel(self.search_results_df))
+                    self.table.redraw()
                     self.status_str.set("Scanned " + str(row) + " out of " + str(result_size) + " profiles")
                     self.parent.update()
+
                     row += 1
-                    profile_list_w_skills.append((profile, skills))
+
             print("Done")
             self.export_to_file_btn.configure(state="normal")
             self.status_str.set("Done")
             self.parent.update()
         except Exception as e:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            print("Error: " + repr(e) + " in " + str(fname) + " line " + str(exc_tb.tb_lineno) + "\n")
-            self.status_str.set("ASomething went wrong! Check console output for more details.")
+            utils.show_exception(e)
+            self.status_str.set("Something went wrong! Check console output for more details.")
             self.parent.update()
 
 
-    def create_start_search_thread(self, keywords, company_names, keywords_title, locations):
+    def create_start_search_thread(self):
         global search_thread
         if 'search_thread' in globals() and search_thread.is_alive():
             messagebox.showinfo("Search in progress", "Another search is still running.\nWait until it finishes or restart the program.")
             return
-        search_thread = threading.Thread(target=self.start_search, args=(keywords, company_names, keywords_title, locations))
+        search_thread = threading.Thread(target=self.start_search)
         search_thread.daemon = True
         search_thread.start()
 
 
     def prepare_dataframe_and_save_to_xsl(self):
         self.status_str.set("Exporting to File...")
-        companies = []
-        locations = []
-        last_names = []
-        first_names = []
-        headlines = []
-        titles = []
-        linkedin_pages = []
-        skills_list = []
-        for (profile, skills) in profile_list_w_skills:
-            if 'geoLocationName' in profile.keys():
-                geolocation = profile['geoLocationName']
-            else:
-                geolocation = ""
-            companies.append(profile['experience'][0]['companyName'])
-            locations.append(geolocation)
-            last_names.append(profile['lastName'])
-            first_names.append(profile['firstName'])
-            headlines.append(profile['headline'])
-            titles.append(profile['experience'][0]['title'])
-            linkedin_pages.append('https://www.linkedin.com/in/' + profile['profile_id'])
-            skills_list.append(', '.join(skills))
-
-        # create dataframe
-        data_frame_for_export = pd.DataFrame({'Company': companies, 'Location': locations, 'Last Name': last_names,
-                                            'First Name': first_names, 'Headline': headlines, 'Title': titles,
-                                            'LinkedIn Page': linkedin_pages, 'Skills': skills_list})
-
-        export_file = utils.save_dataframe_to_file(data_frame_for_export)
+        export_file = utils.save_dataframe_to_file(self.search_results_df)
 
         if export_file is not None:
             self.status_str.set("Table saved under " + export_file)
@@ -262,7 +241,6 @@ if __name__ == "__main__":
     root = ttk.Window()
     root.title("SWFEAT vs Epics")
     root.geometry("1280x720")
-    root.resizable(width=True, height=True)
 
     # Login frame
     login_frame = ttk.Frame(root)
