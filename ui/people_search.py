@@ -1,12 +1,15 @@
+from enum import auto
 import ttkbootstrap as ttk
-from ttkbootstrap.scrolled import ScrolledFrame
+from ttkbootstrap.scrolled import ScrolledFrame, ScrolledText
 from linkedin_api import Linkedin  #todo: import as submodule (otherwise network_depths not working)
 try:
     from .autocompleteEntry import AutocompleteCombobox
     from . import utils
+    from .removableLabel import RemovableLabel
 except:
     from autocompleteEntry import AutocompleteCombobox
     import utils
+    from removableLabel import RemovableLabel
 from tkinter import messagebox
 import os
 import threading
@@ -50,7 +53,7 @@ class PeopleSearch:
         search_fields_canvas = ttk.Canvas(self.search_paned_window)
 
         search_fields_frame = ScrolledFrame(search_fields_canvas)
-        search_fields_frame.pack(side='top', fill='both')
+        search_fields_frame.pack(side='top', fill='both', expand=True, padx=5)
         search_fields_frame.hide_scrollbars()
 
         # Connections
@@ -89,6 +92,8 @@ class PeopleSearch:
         self.entry_keywords_title = ttk.Entry(kw_title_frame)
         self.entry_keywords_title.pack(side='left', expand=True, fill="x", padx=10)
 
+        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+
         # Location Frame
         loc_frame = ttk.Frame(search_fields_frame)
         loc_frame.pack(pady=5, side='top', fill="x")
@@ -98,6 +103,13 @@ class PeopleSearch:
         self.entry_locations.set_completion_list(geo_urn_ids.keys())
         self.entry_locations.pack(side='left', expand=True, fill="x", padx=10)
 
+        # Chosen Locations labels
+        self.location_labels_frame = ScrolledText(search_fields_frame, wrap="word", height=2, autohide=True)
+        self.location_labels_frame.pack(side='top', fill='x', padx=5, pady=0)
+        self.location_labels_frame._text.configure(state="disabled")
+
+        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+
         # Companies frame
         comp_frame = ttk.Frame(search_fields_frame)
         comp_frame.pack(pady=5, side='top', fill="x")
@@ -106,6 +118,16 @@ class PeopleSearch:
         self.entry_companies = AutocompleteCombobox(comp_frame)
         self.entry_companies.set_completion_list(company_public_ids)
         self.entry_companies.pack(side='left', expand=True, fill="x", padx=10)
+
+        # Chosen Companies labels
+        self.company_labels_frame = ScrolledText(search_fields_frame, wrap="word", height=2, autohide=True, borderwidth=0)
+        self.company_labels_frame.pack(side='top', fill='x', padx=5, pady=0)
+        self.company_labels_frame._text.configure(state="disabled")
+        for i in range(6):
+            rm_lbl = RemovableLabel(self.company_labels_frame, f'foo-{i}')
+            self.company_labels_frame.window_create("insert", window=rm_lbl, padx=3, pady=2)
+
+        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
         self.search_paned_window.add(search_fields_canvas)
 
@@ -148,8 +170,7 @@ class PeopleSearch:
         self.label_status = ttk.Label(self.status_frame, textvariable=self.status_str)
         self.label_status.pack(side='left', expand=False)
 
-        separator = ttk.Separator(tk_parent, orient='horizontal')
-        separator.pack(side='bottom', fill='x')
+        ttk.Separator(tk_parent, orient='horizontal').pack(side='bottom', fill='x')
 
     def start_search(self):
         keywords = self.entry_keywords.get()
