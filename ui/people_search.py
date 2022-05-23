@@ -1,4 +1,5 @@
 import ttkbootstrap as ttk
+from ttkbootstrap.scrolled import ScrolledFrame
 from linkedin_api import Linkedin  #todo: import as submodule (otherwise network_depths not working)
 try:
     from .autocompleteEntry import AutocompleteCombobox
@@ -43,10 +44,14 @@ class PeopleSearch:
         self.search_results_df = pd.DataFrame()
 
         # Paned Window
-        self.search_frame = ttk.PanedWindow(tk_parent, orient='horizontal')
-        self.search_frame.pack(side='top', fill="both", expand=True, padx=10)
+        self.search_paned_window = ttk.PanedWindow(tk_parent, orient='horizontal')
+        self.search_paned_window.pack(side='top', fill="both", expand=True, padx=10)
 
-        search_fields_frame = ttk.Frame(self.search_frame)
+        search_fields_canvas = ttk.Canvas(self.search_paned_window)
+
+        search_fields_frame = ScrolledFrame(search_fields_canvas)
+        search_fields_frame.pack(side='top', fill='both')
+        search_fields_frame.hide_scrollbars()
 
         # Connections
         conn_frame = ttk.Frame(search_fields_frame)
@@ -102,7 +107,7 @@ class PeopleSearch:
         self.entry_companies.set_completion_list(company_public_ids)
         self.entry_companies.pack(side='left', expand=True, fill="x", padx=10)
 
-        self.search_frame.add(search_fields_frame)
+        self.search_paned_window.add(search_fields_canvas)
 
         # Table frame
         self.table_main_frame = ttk.Frame(tk_parent)
@@ -115,7 +120,7 @@ class PeopleSearch:
         self.table.unbind_all("<Return>")
         self.table.show()
 
-        self.search_frame.add(self.table_main_frame)
+        self.search_paned_window.add(self.table_main_frame)
 
         # Buttons frame
         btn_frame = ttk.Frame(tk_parent)
