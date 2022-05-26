@@ -1,15 +1,12 @@
-from enum import auto
 import ttkbootstrap as ttk
-from ttkbootstrap.scrolled import ScrolledFrame, ScrolledText
+from ttkbootstrap.scrolled import ScrolledFrame
 from linkedin_api import Linkedin  #todo: import as submodule (otherwise network_depths not working)
 try:
-    from .autocompleteEntry import AutocompleteCombobox
     from . import utils
-    from .removableLabel import RemovableLabel
+    from .searchFrame import SearchFrame
 except:
-    from autocompleteEntry import AutocompleteCombobox
     import utils
-    from removableLabel import RemovableLabel
+    from searchFrame import SearchFrame
 from tkinter import messagebox
 import os
 import threading
@@ -32,9 +29,8 @@ company_public_ids_filepath = 'resources/Company_public_IDs.txt'
 company_public_ids = []
 if os.path.isfile(company_public_ids_filepath):
     with open(company_public_ids_filepath, encoding='utf-8') as f:
-        public_ids = f.readlines()
-        for id in public_ids:
-            company_public_ids.append(id)
+        company_public_ids = f.read().split('\n')
+
 
 class PeopleSearch:
     def __init__(self, tk_parent, username_field, password_field):
@@ -95,37 +91,18 @@ class PeopleSearch:
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
         # Location Frame
-        loc_frame = ttk.Frame(search_fields_frame)
-        loc_frame.pack(pady=5, side='top', fill="x")
-        label_locations = ttk.Label(loc_frame, text="Location")
-        label_locations.pack(side='left', expand=False)
-        self.entry_locations = AutocompleteCombobox(loc_frame)
-        self.entry_locations.set_completion_list(geo_urn_ids.keys())
-        self.entry_locations.pack(side='left', expand=True, fill="x", padx=10)
-
-        # Chosen Locations labels
-        self.location_labels_frame = ScrolledText(search_fields_frame, wrap="word", height=2, autohide=True)
-        self.location_labels_frame.pack(side='top', fill='x', padx=5, pady=0)
-        self.location_labels_frame._text.configure(state="disabled")
+        loc_frame = SearchFrame(search_fields_frame, title='Location', completion_list=geo_urn_ids.keys())
+        loc_frame.pack(side='top', fill="x")
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
         # Companies frame
-        comp_frame = ttk.Frame(search_fields_frame)
-        comp_frame.pack(pady=5, side='top', fill="x")
-        label_companies = ttk.Label(comp_frame, text="Company public ID")
-        label_companies.pack(side='left', expand=False)
-        self.entry_companies = AutocompleteCombobox(comp_frame)
-        self.entry_companies.set_completion_list(company_public_ids)
-        self.entry_companies.pack(side='left', expand=True, fill="x", padx=10)
+        comp_frame = SearchFrame(search_fields_frame, title='Company', completion_list=company_public_ids)
+        comp_frame.pack(side='top', fill="x")
 
-        # Chosen Companies labels
-        self.company_labels_frame = ScrolledText(search_fields_frame, wrap="word", height=2, autohide=True, borderwidth=0)
-        self.company_labels_frame.pack(side='top', fill='x', padx=5, pady=0)
-        self.company_labels_frame._text.configure(state="disabled")
-        for i in range(6):
-            rm_lbl = RemovableLabel(self.company_labels_frame, f'foo-{i}')
-            self.company_labels_frame.window_create("insert", window=rm_lbl, padx=3, pady=2)
+        # for i in range(6):
+        #     rm_lbl = RemovableLabel(self.company_labels_frame, f'foo-{i}')
+        #     self.company_labels_frame.window_create("insert", window=rm_lbl, padx=3, pady=2)
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
