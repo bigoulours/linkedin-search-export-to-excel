@@ -1,0 +1,92 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - "v*"
+      
+jobs:         
+  buildwindows:
+    name: Windows x64
+    runs-on: windows-2022
+
+    steps:
+      - name: Get tag
+        id: tag
+        uses: dawidd6/action-get-tag@v1
+        with:
+          # Optionally strip `v` prefix
+          strip_v: false
+
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - uses: bluwy/substitute-string-action@v1
+        id: sub
+        with:
+          _input-file: 'CI/version.py'
+          dev: ${{steps.tag.outputs.tag}}
+
+      - run: echo '${{ steps.sub.outputs.result }}' > .\CI\version.py
+
+      - name: Install dependencies
+        shell: cmd
+        run: |
+          python -m pip install lib/linkedin_api
+          python -m pip install -r requirements.txt
+
+      - name: Compile
+        shell: cmd
+        run: |
+          python build_exe.py
+
+      - name: Package
+        run: |
+          xcopy /i /E dist package
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: linkedInSearchResultsToFile
+          path: package
+ 
+  pre-release:
+    name: "release"
+    runs-on: "ubuntu-latest"
+    needs: [buildwindows]
+
+    steps:
+      - name: Get tag
+        id: tag
+        uses: dawidd6/action-get-tag@v1
+        with:
+          # Optionally strip `v` prefix
+          strip_v: false
+
+      - uses: actions/download-artifact@v2
+
+      - name: zip artifacts
+        run: zip -r linkedInSearchResultsToFile.zip linkedInSearchResultsToFile
+        
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: linkedInSearchResultsToFile.zip
+          asset_name: linkedInSearchResultsToFile${{steps.tag.outputs.tag}}.zip
+          asset_content_type: application/octet-stream
