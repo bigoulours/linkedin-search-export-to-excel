@@ -1,4 +1,5 @@
 import ttkbootstrap as ttk
+from ttkbootstrap.tooltip import ToolTip
 from tkinter import messagebox
 import os
 import configparser
@@ -28,6 +29,7 @@ login_frame.pack(pady=10, expand=False, fill="x")
 
 label_usr = ttk.Label(login_frame, text="User")
 label_usr.pack(side='left', expand=False, padx=5)
+ToolTip(label_usr, text="Pre-filled value can be edited in the .ini-file.\nBe sure to disable 2FA.")
 entry_usr = ttk.Entry(login_frame)
 entry_usr.insert(0, config_dict.get('General',{}).get('user', ''))
 entry_usr.pack(side='left', expand=True, fill="x", padx=5)

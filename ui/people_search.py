@@ -100,10 +100,6 @@ class PeopleSearch:
         self.comp_frame = SearchFrame(search_fields_frame, title='Company', completion_list=company_public_ids)
         self.comp_frame.pack(side='top', fill="x")
 
-        # for i in range(6):
-        #     rm_lbl = RemovableLabel(self.company_labels_frame, f'foo-{i}')
-        #     self.company_labels_frame.window_create("insert", window=rm_lbl, padx=3, pady=2)
-
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
         self.search_paned_window.add(search_fields_canvas)
@@ -132,22 +128,29 @@ class PeopleSearch:
 \nIt doesn't contain any personal details (only public IDs) \
 \nYou're not likely to reach any search limit using this mode.")
 
-        start_search_btn = ttk.Button(btn_frame, text="Deep Search", bootstyle='danger')
-        start_search_btn.pack(side='left')
+
+        btn_sub_frame = ttk.Frame(btn_frame)
+        btn_sub_frame.pack(side="left", fill="none", expand=True)
+
+        start_search_btn = ttk.Button(btn_sub_frame, text="Deep Search", bootstyle='danger')
+        start_search_btn.pack(side='left', padx=10)
         start_search_btn['command'] = self.start_deep_search
         ToolTip(start_search_btn, "Each search result will be fetched for additional information. \
             \nDepending on the number of results and search frequency, this can trigger the linkedin limit \
 after which you'll only be able to get 3 results per search until the end of the month.")
 
-        btn_sub_frame = ttk.Frame(btn_frame)
-        btn_sub_frame.pack(side="left", fill="none", expand=True)
         self.get_skills = ttk.BooleanVar()
-        chckbox_get_skills = ttk.Checkbutton(btn_sub_frame, text="Get skills",
-                                                    variable=self.get_skills, bootstyle="primary")                                
-        chckbox_get_skills.pack(side='top')
+        chckbox_get_skills = ttk.Checkbutton(btn_sub_frame, text="Fetch skills",
+                                                    variable=self.get_skills, bootstyle="danger")                            
+        chckbox_get_skills.pack(side='left', padx=10)
+
+        self.get_contact_info = ttk.BooleanVar()
+        chckbox_get_contact_info = ttk.Checkbutton(btn_sub_frame, text="Fetch contact info",
+                                                    variable=self.get_contact_info, bootstyle="danger")
+        chckbox_get_contact_info.pack(side='left', padx=10) 
 
         self.export_to_file_btn = ttk.Button(btn_frame, text="Export to File", state="disabled")
-        self.export_to_file_btn.pack(side='left')
+        self.export_to_file_btn.pack(side='left', padx=10)
         self.export_to_file_btn['command'] = self.prepare_dataframe_and_save_to_xsl
 
         # Status frame
@@ -233,6 +236,10 @@ after which you'll only be able to get 3 results per search until the end of the
                             skills_raw = self.linkedin_conn[0].get_profile_skills(urn_id=people['urn_id'])
                             skills = [dic['name'] for dic in skills_raw]
                             profile_dict.update({'Skills': [skills]})
+
+                        if self.get_contact_info.get():
+                            contact_info = self.linkedin_conn[0].get_profile_contact_info(urn_id=people['urn_id'])
+                            profile_dict.update(contact_info)
 
                         self.search_results_df = pd.concat([self.search_results_df,
                                                     pd.DataFrame(profile_dict)])
