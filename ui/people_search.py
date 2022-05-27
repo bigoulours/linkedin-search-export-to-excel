@@ -1,6 +1,7 @@
 import ttkbootstrap as ttk
 from ttkbootstrap.scrolled import ScrolledFrame
-from linkedin_api import Linkedin  #todo: import as submodule (otherwise network_depths not working)
+from ttkbootstrap.tooltip import ToolTip
+from linkedin_api import Linkedin
 try:
     from . import utils
     from .searchFrame import SearchFrame
@@ -41,6 +42,8 @@ class PeopleSearch:
         self.parent = tk_parent
 
         self.search_results_df = pd.DataFrame()
+        self.search_thread = None
+        self.quick_search = True
 
         # Paned Window
         self.search_paned_window = ttk.PanedWindow(tk_parent, orient='horizontal')
@@ -91,14 +94,14 @@ class PeopleSearch:
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
         # Location Frame
-        loc_frame = SearchFrame(search_fields_frame, title='Location', completion_list=geo_urn_ids.keys())
-        loc_frame.pack(side='top', fill="x")
+        self.loc_frame = SearchFrame(search_fields_frame, title='Location', completion_list=geo_urn_ids.keys())
+        self.loc_frame.pack(side='top', fill="x")
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
         # Companies frame
-        comp_frame = SearchFrame(search_fields_frame, title='Company', completion_list=company_public_ids)
-        comp_frame.pack(side='top', fill="x")
+        self.comp_frame = SearchFrame(search_fields_frame, title='Company', completion_list=company_public_ids)
+        self.comp_frame.pack(side='top', fill="x")
 
         # for i in range(6):
         #     rm_lbl = RemovableLabel(self.company_labels_frame, f'foo-{i}')
@@ -125,9 +128,19 @@ class PeopleSearch:
         btn_frame = ttk.Frame(tk_parent)
         btn_frame.pack(padx=10, pady=10, side='top', fill="x")
 
-        start_search_btn = ttk.Button(btn_frame, text="Search Now!")
+        quick_search_btn = ttk.Button(btn_frame, text="Quick search")
+        quick_search_btn.pack(side='left', padx=10)
+        quick_search_btn['command'] = self.start_quick_search
+        ToolTip(quick_search_btn, "This is a single request that will yield the same results as in the linkedin search bar. \
+\nIt doesn't contain any personal details (only public IDs) \
+\nYou're not likely to reach any search limit using this mode.")
+
+        start_search_btn = ttk.Button(btn_frame, text="Deep Search", bootstyle='danger')
         start_search_btn.pack(side='left')
-        start_search_btn['command'] = self.create_start_search_thread
+        start_search_btn['command'] = self.start_deep_search
+        ToolTip(start_search_btn, "Each search result will be fetched for additional information. \
+            \nDepending on the number of results and search frequency, this can trigger the linkedin limit \
+after which you'll only be able to get 3 results per search until the end of the month.")
 
         btn_sub_frame = ttk.Frame(btn_frame)
         btn_sub_frame.pack(side="left", fill="none", expand=True)
@@ -149,11 +162,11 @@ class PeopleSearch:
 
         ttk.Separator(tk_parent, orient='horizontal').pack(side='bottom', fill='x')
 
-    def start_search(self):
+    def run_search(self):
         keywords = self.entry_keywords.get()
-        company_names = self.entry_companies.get()
+        company_names = self.comp_frame.get_current_selection()
         keywords_title = self.entry_keywords_title.get()
-        locations = [geo_urn_ids[x] for x in self.entry_locations.get().split() if x in geo_urn_ids.keys()]
+        locations = self.loc_frame.get_current_selection()
         network_depths = []
         if self.first_con.get():
             network_depths.append('F')
@@ -174,73 +187,77 @@ class PeopleSearch:
                 messagebox.showinfo("Error", "Login failed!\nCheck username and password.\n2FA must be disabled in LinkedIn settings.")
                 return
 
-            if company_names != "":
-                companyIDs = []
-                for company_name in company_names.split():
-                    try:
-                        company = api.get_company(company_name)
-                        companyIDs.append(company['entityUrn'].split(":")[-1])
-                    except Exception as e:
-                        answer_is_yes = messagebox.askyesno("Warning", "No company found with public ID " + company_name +
-                                                            "\nLook for the public ID of the company on LinkedIn:\n"
-                                                            "https://www.linkedin.com/company/<public ID>\n\n Ignore and proceed anyway?")
-                        if not answer_is_yes:
-                            self.status_str.set("Search cancelled.")
-                            self.parent.update()
-                            return
-            else:
-                companyIDs = None
+            companyIDs = []
+            for company_name in company_names:
+                try:
+                    company = api.get_company(company_name)
+                    companyIDs.append(company['entityUrn'].split(":")[-1])
+                except Exception as e:
+                    answer_is_yes = messagebox.askyesno("Warning", "No company found with public ID " + company_name +
+                                                        "\nLook for the public ID of the company on LinkedIn:\n"
+                                                        "https://www.linkedin.com/company/<public ID>\n\n Ignore and proceed anyway?")
+                    if not answer_is_yes:
+                        self.status_str.set("Search cancelled.")
+                        self.parent.update()
+                        return
 
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
             search_result = api.search_people(keywords=keywords, network_depths=network_depths, current_company=companyIDs, regions=locations,
                                             keyword_title=keywords_title, include_private_profiles=False)
-            result_size = len(search_result)
-            self.status_str.set("Found " + str(result_size) + " results! Searching contact details... This can take a while...")
-            self.parent.update()
 
-            if result_size > 999:
-                answer_is_yes = messagebox.askyesno("Too many results!", "This search yields more than 1000 results (upper limit for this app).\nProceed anyway?")
-                if not answer_is_yes:
-                    self.status_str.set("Search cancelled.")
-                    self.parent.update()
-                    return
+            if self.quick_search:
+                self.search_results_df = pd.DataFrame(search_result)
+                self.table.updateModel(TableModel(self.search_results_df))
+                self.table.redraw()
 
-            row = 1
+            else:
+                result_size = len(search_result)
+                self.status_str.set("Found " + str(result_size) + " results! Searching contact details... This can take a while...")
+                self.parent.update()
 
-            for people in search_result:
-                profile = api.get_profile(urn_id=people['urn_id'])
-                if profile != {}:
-                    if 'geoLocationName' in profile.keys():
-                        geolocation = profile['geoLocationName']
-                    elif 'confirmedLocations' in company:
-                        geolocation = company['confirmedLocations'][0]['city']
-                    else:
-                        geolocation = ""
+                if result_size > 999:
+                    answer_is_yes = messagebox.askyesno("Too many results!", "This search yields more than 1000 results (upper limit for this app).\nProceed anyway?")
+                    if not answer_is_yes:
+                        self.status_str.set("Search cancelled.")
+                        self.parent.update()
+                        return
 
-                    profile_dict = {
-                        'First Name': [profile['firstName']],
-                        'Last Name': [profile['lastName']],
-                        'Title': [profile['experience'][0]['title']],
-                        'Company': [profile['experience'][0]['companyName']],
-                        'Location': [geolocation],
-                        'Headline': [profile['headline']],
-                        'Profile Link': ['https://www.linkedin.com/in/' + profile['profile_id']]
-                    }
+                row = 1
 
-                    if self.get_skills.get():
-                        skills_raw = api.get_profile_skills(urn_id=people['urn_id'])
-                        skills = [dic['name'] for dic in skills_raw]
-                        profile_dict.update({'Skills': [skills]})
+                for people in search_result:
+                    profile = api.get_profile(urn_id=people['urn_id'])
+                    if profile != {}:
+                        if 'geoLocationName' in profile.keys():
+                            geolocation = profile['geoLocationName']
+                        elif 'confirmedLocations' in company:
+                            geolocation = company['confirmedLocations'][0]['city']
+                        else:
+                            geolocation = ""
 
-                    self.search_results_df = pd.concat([self.search_results_df,
-                                                pd.DataFrame(profile_dict)])
+                        profile_dict = {
+                            'First Name': [profile['firstName']],
+                            'Last Name': [profile['lastName']],
+                            'Title': [profile['experience'][0]['title']],
+                            'Company': [profile['experience'][0]['companyName']],
+                            'Location': [geolocation],
+                            'Headline': [profile['headline']],
+                            'Profile Link': ['https://www.linkedin.com/in/' + profile['profile_id']]
+                        }
 
-                    self.table.updateModel(TableModel(self.search_results_df))
-                    self.table.redraw()
-                    self.status_str.set("Scanned " + str(row) + " out of " + str(result_size) + " profiles")
-                    self.parent.update()
+                        if self.get_skills.get():
+                            skills_raw = api.get_profile_skills(urn_id=people['urn_id'])
+                            skills = [dic['name'] for dic in skills_raw]
+                            profile_dict.update({'Skills': [skills]})
 
-                    row += 1
+                        self.search_results_df = pd.concat([self.search_results_df,
+                                                    pd.DataFrame(profile_dict)])
+
+                        self.table.updateModel(TableModel(self.search_results_df))
+                        self.table.redraw()
+                        self.status_str.set("Scanned " + str(row) + " out of " + str(result_size) + " profiles")
+                        self.parent.update()
+
+                        row += 1
 
             self.export_to_file_btn.configure(state="normal")
             self.status_str.set("Done")
@@ -251,15 +268,21 @@ class PeopleSearch:
             self.parent.update()
 
 
-    def create_start_search_thread(self):
-        global search_thread
-        if 'search_thread' in globals() and search_thread.is_alive():
+    def create_search_thread(self):
+        if self.search_thread and self.search_thread.is_alive():
             messagebox.showinfo("Search in progress", "Another search is still running.\nWait until it finishes or restart the program.")
             return
-        search_thread = threading.Thread(target=self.start_search)
-        search_thread.daemon = True
-        search_thread.start()
+        self.search_thread = threading.Thread(target=self.run_search)
+        self.search_thread.daemon = True
+        self.search_thread.start()
 
+    def start_quick_search(self):
+        self.quick_search = True
+        self.create_search_thread()
+
+    def start_deep_search(self):
+        self.quick_search = False
+        self.create_search_thread()
 
     def prepare_dataframe_and_save_to_xsl(self):
         self.status_str.set("Exporting to File...")
