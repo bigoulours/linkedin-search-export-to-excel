@@ -1,7 +1,6 @@
 import ttkbootstrap as ttk
 from ttkbootstrap.scrolled import ScrolledFrame
 from ttkbootstrap.tooltip import ToolTip
-from linkedin_api import Linkedin
 try:
     from . import utils
     from .searchFrame import SearchFrame
@@ -34,12 +33,10 @@ if os.path.isfile(company_public_ids_filepath):
 
 
 class PeopleSearch:
-    def __init__(self, tk_parent, username_field, password_field):
-
-        self.entry_usr = username_field
-        self.entry_pwd = password_field
+    def __init__(self, tk_parent, linkedin_conn):
 
         self.parent = tk_parent
+        self.linkedin_conn = linkedin_conn
 
         self.search_results_df = pd.DataFrame()
         self.search_thread = None
@@ -175,22 +172,10 @@ after which you'll only be able to get 3 results per search until the end of the
         if self.third_con.get():
             network_depths.append('O')
         try:
-            # Authenticate using any Linkedin account credentials
-            try:
-                api = Linkedin(self.entry_usr.get(), self.entry_pwd.get())
-                self.status_str.set("Login successful!")
-                self.parent.update()
-                self.search_results_df = pd.DataFrame()
-                self.export_to_file_btn.configure(state="disabled")
-            except Exception as e:
-                utils.show_exception(e)
-                messagebox.showinfo("Error", "Login failed!\nCheck username and password.\n2FA must be disabled in LinkedIn settings.")
-                return
-
             companyIDs = []
             for company_name in company_names:
                 try:
-                    company = api.get_company(company_name)
+                    company = self.linkedin_conn[0].get_company(company_name)
                     companyIDs.append(company['entityUrn'].split(":")[-1])
                 except Exception as e:
                     answer_is_yes = messagebox.askyesno("Warning", "No company found with public ID " + company_name +
@@ -202,7 +187,7 @@ after which you'll only be able to get 3 results per search until the end of the
                         return
 
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
-            search_result = api.search_people(keywords=keywords, network_depths=network_depths, current_company=companyIDs, regions=locations,
+            search_result = self.linkedin_conn[0].search_people(keywords=keywords, network_depths=network_depths, current_company=companyIDs, regions=locations,
                                             keyword_title=keywords_title, include_private_profiles=False)
 
             if self.quick_search:
@@ -225,7 +210,7 @@ after which you'll only be able to get 3 results per search until the end of the
                 row = 1
 
                 for people in search_result:
-                    profile = api.get_profile(urn_id=people['urn_id'])
+                    profile = self.linkedin_conn[0].get_profile(urn_id=people['urn_id'])
                     if profile != {}:
                         if 'geoLocationName' in profile.keys():
                             geolocation = profile['geoLocationName']
@@ -245,7 +230,7 @@ after which you'll only be able to get 3 results per search until the end of the
                         }
 
                         if self.get_skills.get():
-                            skills_raw = api.get_profile_skills(urn_id=people['urn_id'])
+                            skills_raw = self.linkedin_conn[0].get_profile_skills(urn_id=people['urn_id'])
                             skills = [dic['name'] for dic in skills_raw]
                             profile_dict.update({'Skills': [skills]})
 
@@ -269,6 +254,9 @@ after which you'll only be able to get 3 results per search until the end of the
 
 
     def create_search_thread(self):
+        if not self.linkedin_conn[0]:
+            messagebox.showinfo("Error", "First log into Linkedin!")
+            return
         if self.search_thread and self.search_thread.is_alive():
             messagebox.showinfo("Search in progress", "Another search is still running.\nWait until it finishes or restart the program.")
             return
@@ -295,24 +283,42 @@ after which you'll only be able to get 3 results per search until the end of the
 
 
 if __name__ == "__main__":
+    from linkedin_api import Linkedin
+
     root = ttk.Window()
-    root.title("SWFEAT vs Epics")
+    root.title("LinkedIn People Search")
     root.geometry("1280x720")
 
     # Login frame
     login_frame = ttk.Frame(root)
-    login_frame.pack(padx=10, pady=5, expand=False, fill="x")
+    login_frame.pack(pady=10, expand=False, fill="x")
+
     label_usr = ttk.Label(login_frame, text="User")
-    label_usr.pack(side='left', expand=False)
+    label_usr.pack(side='left', expand=False, padx=5)
     entry_usr = ttk.Entry(login_frame)
-    entry_usr.pack(side='left', expand=True, fill="x")
+    entry_usr.pack(side='left', expand=True, fill="x", padx=5)
+
     label_pwd = ttk.Label(login_frame, text="Pwd")
-    label_pwd.pack(side='left', expand=False)
+    label_pwd.pack(side='left', expand=False, padx=5)
     entry_pwd = ttk.Entry(login_frame, show="*")
-    entry_pwd.pack(side='left', expand=True, fill="x")
+    entry_pwd.pack(side='left', expand=True, fill="x", padx=5)
 
-    separator = ttk.Separator(root, orient='horizontal')
-    separator.pack(side='top', pady=10, fill='x')
+    connect_btn = ttk.Button(login_frame, text="Connect")
+    connect_btn.pack(side='left', padx=5)
 
-    people_search = PeopleSearch(root, entry_usr, entry_pwd)
+    linkedin_conn = [None]
+
+    def connect_linkedin():
+        # Authenticate using any Linkedin account credentials
+        try:
+            linkedin_conn[0] = Linkedin(entry_usr.get(), entry_pwd.get())
+            messagebox.showinfo("Success", "Successfully logged into LinkedIn.")
+
+        except Exception as e:
+            messagebox.showinfo("Error", "Login failed!\nCheck username and password.\n2FA must be disabled in LinkedIn settings.")
+            return
+
+    connect_btn['command'] = connect_linkedin
+
+    people_search = PeopleSearch(root, linkedin_conn)
     root.mainloop()

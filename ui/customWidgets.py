@@ -64,6 +64,7 @@ class AutocompleteCombobox(ttk.Combobox):
             self.scrolled_text.window_create("insert", window=rm_lbl, padx=3, pady=2)
         self.set('')
         self.autocomplete()
+        self.parent.update()
     
     def autocomplete_fetch(self):
         """autocomplete the Combobox"""
