@@ -21,14 +21,15 @@ class RemovableLabel(ttk.Frame):
 
 class AutocompleteCombobox(ttk.Combobox):
 
-    def __init__(self, parent, completion_list=None, fetch_url=None):
+    def __init__(self, parent, completion_list=None, fetch_fct=None):
         super().__init__(parent)
+        self.unbind_class("TCombobox", "<Down>")
         self.bind('<KeyRelease>', self.handle_keyrelease)
         if completion_list:
             self._completion_list = sorted(completion_list, key=str.lower)
             self['values'] = self._completion_list
-        elif fetch_url:
-            self.fetch_url = fetch_url
+        elif fetch_fct:
+            self.fetch_fct = fetch_fct
             self.autocomplete = self.autocomplete_fetch
 
     def autocomplete(self):
@@ -44,11 +45,11 @@ class AutocompleteCombobox(ttk.Combobox):
         else:
             self['values'] = self._completion_list
 
+        self.event_generate('<Button-1>')
+
     def handle_keyrelease(self, event):
         """event handler for the keyrelease event on this widget"""
         if event.keysym == "Down": 
-            self.event_generate('<Button-1>') 
-        if len(event.keysym) == 1 or event.keysym == "BackSpace": 
             self.autocomplete() 
     
     def set_selection_text(self, parent_widget, selection_txt: ScrolledText):
@@ -63,7 +64,6 @@ class AutocompleteCombobox(ttk.Combobox):
             rm_lbl = RemovableLabel(self.parent, self.get())
             self.scrolled_text.window_create("insert", window=rm_lbl, padx=3, pady=2)
         self.set('')
-        self.autocomplete()
         self.parent.update()
     
     def autocomplete_fetch(self):
@@ -78,5 +78,6 @@ class AutocompleteCombobox(ttk.Combobox):
             self['values'] = _hits
         else:
             self['values'] = self._completion_list
- 
+
+        self.event_generate('<Button-1>')
 
