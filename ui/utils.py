@@ -5,6 +5,7 @@ import pandas as pd
 import xlsxwriter
 from ttkbootstrap import Style
 from pandastable import Table
+from linkedin_api import linkedin
 
 def show_exception(e):
     exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -71,3 +72,9 @@ def save_dataframe_to_file(dataframe, keep_index=True, json_orient="records"):
         dataframe.to_json(chosen_file.name, index=keep_index, orient=json_orient, indent=4)
 
     return chosen_file.name
+
+def get_geo_urn_ids(linkedin_conn, search_loc):
+    geo_list = linkedin_conn.get_geo_urn_ids(search_loc)
+    return {g.get('text', {}).get('text', '') : 
+            g.get('targetUrn', '').rsplit(':', 1)[-1]
+            for g in geo_list}

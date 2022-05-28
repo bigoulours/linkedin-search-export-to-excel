@@ -163,6 +163,9 @@ after which you'll only be able to get 3 results per search until the end of the
         ttk.Separator(tk_parent, orient='horizontal').pack(side='bottom', fill='x')
 
     def run_search(self):
+
+        #dbg = utils.get_geo_urn_ids(linkedin_conn[0], 'USA')
+
         keywords = self.entry_keywords.get()
         company_names = self.comp_frame.get_current_selection()
         keywords_title = self.entry_keywords_title.get()
