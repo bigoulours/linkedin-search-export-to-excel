@@ -21,12 +21,17 @@ class RemovableLabel(ttk.Frame):
 
 class AutocompleteCombobox(ttk.Combobox):
 
-    def __init__(self, parent, completion_list=None, fetch_fct=None):
-        super().__init__(parent)
+    def __init__(self, parent, completion_list=None, completion_dict={}, fetch_fct=None):
+        self.string_var = ttk.StringVar()
+        super().__init__(parent, textvariable=self.string_var)
         self.unbind_class("TCombobox", "<Down>")
         self.bind('<KeyRelease>', self.handle_keyrelease)
+        self._completion_dict = completion_dict
         if completion_list:
             self._completion_list = sorted(completion_list, key=str.lower)
+            self['values'] = self._completion_list
+        elif completion_dict:
+            self._completion_list = sorted(completion_dict.keys(), key=str.lower)
             self['values'] = self._completion_list
         elif fetch_fct:
             self.fetch_fct = fetch_fct
@@ -58,26 +63,26 @@ class AutocompleteCombobox(ttk.Combobox):
         self.bind('<<ComboboxSelected>>', self.add_selection_to_scrolled_text)
 
     def add_selection_to_scrolled_text(self, event):
-        if self.get() in self.parent.get_current_selection():
+        if self.string_var.get() in self.parent.get_current_selection():
             pass
         else:
-            rm_lbl = RemovableLabel(self.parent, self.get())
+            rm_lbl = RemovableLabel(self.parent, self.string_var.get(), 
+                                    value=self._completion_dict.get(self.string_var.get(), None))
             self.scrolled_text.window_create("insert", window=rm_lbl, padx=3, pady=2)
         self.set('')
         self.parent.update()
     
     def autocomplete_fetch(self):
-        """autocomplete the Combobox"""
-        # collect hits
-        _hits = []
-        for element in self._completion_list:
-                if self.get().lower() in element.lower(): # Match case insensitively
-                    _hits.append(element)
-        # perform auto completion
-        if _hits:
-            self['values'] = _hits
-        else:
-            self['values'] = self._completion_list
+        """fetch dropdown content"""
+        if self.string_var.get():
+            fct_res = self.fetch_fct(self.string_var.get())
+            if isinstance(fct_res, list):
+                self['values'] = fct_res
+            elif isinstance(fct_res, dict):
+                self['values'] = sorted(fct_res.keys(), key=str.lower)
+                self._completion_dict = fct_res
+            else:
+                print("Fetch function returned neither a list nor a dict. Not filling dropdown...")
 
         self.event_generate('<Button-1>')
 

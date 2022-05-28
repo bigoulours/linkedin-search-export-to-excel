@@ -7,14 +7,14 @@ except:
     from customWidgets import *
 
 class SearchFrame(ttk.Frame):
-    def __init__(self, parent_widget, title='', completion_list=None, fetch_url=None):
+    def __init__(self, parent_widget, title='', completion_list=None, fetch_fct=None):
         super().__init__(parent_widget)
         first_row = ttk.Frame(self)
         first_row.pack(side='top', fill='x', pady=5)
         self.label = ttk.Label(first_row, text=title)
         self.label.pack(side='left', expand=False)
         ToolTip(self.label, text=f"Type characters matching the desired {title} and press <Down> to show available options.")
-        self.entry = AutocompleteCombobox(first_row, completion_list=completion_list, fetch_fct=fetch_url)
+        self.entry = AutocompleteCombobox(first_row, completion_list=completion_list, fetch_fct=fetch_fct)
         self.entry.pack(side='left', expand=True, fill="x", padx=10)
 
         second_row = ttk.Frame(self)
@@ -26,5 +26,5 @@ class SearchFrame(ttk.Frame):
         self.entry.set_selection_text(self, self.labels_scrolled_text)
 
     def get_current_selection(self):
-        return [self.nametowidget(x[1]).lbl_name
-                for x in self.labels_scrolled_text.dump('1.0', 'end-1c')[1:]]
+        return {(rm_lbl:=self.nametowidget(x[1])).lbl_name : rm_lbl.value
+                for x in self.labels_scrolled_text.dump('1.0', 'end-1c')[1:]}

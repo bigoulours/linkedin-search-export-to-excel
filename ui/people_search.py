@@ -14,17 +14,6 @@ import pandas as pd
 from pandastable import Table, TableModel
 
 
-geo_urn_ids_filepath = 'resources/geo_urn_ids.txt'
-geo_urn_ids = dict()
-if os.path.isfile(geo_urn_ids_filepath):
-    with open(geo_urn_ids_filepath, encoding='utf-8') as f:
-        geo_kvpairs = f.readlines()
-        for kvpair in geo_kvpairs:
-            key, value = kvpair.split(':')
-            key = key.strip()
-            value = value.strip()
-            geo_urn_ids[key] = value
-
 company_public_ids_filepath = 'resources/Company_public_IDs.txt'
 company_public_ids = []
 if os.path.isfile(company_public_ids_filepath):
@@ -91,7 +80,8 @@ class PeopleSearch:
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
         # Location Frame
-        self.loc_frame = SearchFrame(search_fields_frame, title='Location', completion_list=geo_urn_ids.keys())
+        self.loc_frame = SearchFrame(search_fields_frame, title='Location',
+                                    fetch_fct=lambda x: utils.get_geo_urn_ids(linkedin_conn[0], x))
         self.loc_frame.pack(side='top', fill="x")
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
@@ -163,13 +153,10 @@ after which you'll only be able to get 3 results per search until the end of the
         ttk.Separator(tk_parent, orient='horizontal').pack(side='bottom', fill='x')
 
     def run_search(self):
-
-        #dbg = utils.get_geo_urn_ids(linkedin_conn[0], 'USA')
-
         keywords = self.entry_keywords.get()
-        company_names = self.comp_frame.get_current_selection()
+        company_names = self.comp_frame.get_current_selection().keys()
         keywords_title = self.entry_keywords_title.get()
-        locations = self.loc_frame.get_current_selection()
+        locations = self.loc_frame.get_current_selection().values()
         network_depths = []
         if self.first_con.get():
             network_depths.append('F')
