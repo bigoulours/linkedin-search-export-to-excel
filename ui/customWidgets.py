@@ -1,3 +1,4 @@
+from tkinter import StringVar
 import ttkbootstrap as ttk
 from ttkbootstrap.scrolled import ScrolledText
 
@@ -7,10 +8,11 @@ class RemovableLabel(ttk.Frame):
     def __init__(self, parent_widget, label_name, value=None, **kw):
         super().__init__(parent_widget, **kw)
         self.parent = parent_widget
-        self.lbl_name = label_name
+        self.lbl_name = StringVar()
+        self.lbl_name.set(label_name)
         self.value = value
         self.configure(borderwidth=1, relief="solid")
-        lbl = ttk.Label(self, text=label_name, bootstyle='inverse-secondary', padding=PADDING)
+        lbl = ttk.Label(self, textvariable=self.lbl_name, bootstyle='inverse-secondary', padding=PADDING)
         lbl.pack(side='left')
         close_btn = ttk.Button(self, text='x', bootstyle='secondary', padding=PADDING)
         close_btn.pack(side='left')
@@ -26,7 +28,8 @@ class RemovableLabel(ttk.Frame):
 
 class AutocompleteCombobox(ttk.Combobox):
 
-    def __init__(self, parent, completion_list=None, completion_dict={}, fetch_fct=None):
+    def __init__(self, parent, completion_list=None, completion_dict={}, fetch_fct=None, single_choice=False):
+        self.single_choice = single_choice
         self.string_var = ttk.StringVar()
         super().__init__(parent, textvariable=self.string_var)
         self.unbind_class("TCombobox", "<Down>")
@@ -68,12 +71,17 @@ class AutocompleteCombobox(ttk.Combobox):
         self.bind('<<ComboboxSelected>>', self.add_selection_to_scrolled_text)
 
     def add_selection_to_scrolled_text(self, event):
-        if self.string_var.get() in self.parent.get_current_selection():
+        curr_sel = self.parent.get_current_selection()
+        if self.string_var.get() in curr_sel:
             pass
         else:
             rm_lbl = RemovableLabel(self.parent, self.string_var.get(), 
                                     value=self._completion_dict.get(self.string_var.get(), None))
-            self.scrolled_text.window_create("insert", window=rm_lbl, padx=3, pady=2)
+            if curr_sel and self.single_choice:
+                curr_sel[0].lbl_name.set(rm_lbl.lbl_name.get())
+                curr_sel[0].value = rm_lbl.value
+            else:
+                self.scrolled_text.window_create("insert", window=rm_lbl, padx=3, pady=2)
         self.set('')
         self.parent.resize_text_box()
     

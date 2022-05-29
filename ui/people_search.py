@@ -54,23 +54,30 @@ class PeopleSearch:
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
+        ### Connection of
+        self.conn_of_frame = SearchFrame(search_fields_frame, title='Connection of', single_choice=True,
+                    fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_contact_urn_ids, x))
+        self.conn_of_frame.pack(side='top', fill="x")
+
+        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+
         ### Location Frame
         self.loc_frame = SearchFrame(search_fields_frame, title='Location',
-                                    fetch_fct=lambda x: utils.get_geo_urn_ids(linkedin_conn[0], x))
+                    fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_geo_urn_ids, x))
         self.loc_frame.pack(side='top', fill="x")
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
         ### Current Company frame
         self.current_comp_frame = SearchFrame(search_fields_frame, title='Current Company',
-                                    fetch_fct=lambda x: utils.get_company_urn_ids(linkedin_conn[0], x))
+                    fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_company_urn_ids, x))
         self.current_comp_frame.pack(side='top', fill="x")
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
         ### Past Company frame
         self.past_comp_frame = SearchFrame(search_fields_frame, title='Past Company',
-                                    fetch_fct=lambda x: utils.get_company_urn_ids(linkedin_conn[0], x))
+                    fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_company_urn_ids, x))
         self.past_comp_frame.pack(side='top', fill="x", pady=5)
 
         ### KW-Header
@@ -183,9 +190,10 @@ after which you'll only be able to get 3 results per search until the end of the
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
             search_result = self.linkedin_conn[0].search_people(
                     network_depths=network_depths,
-                    regions=self.loc_frame.get_current_selection().values(),
-                    current_company=self.current_comp_frame.get_current_selection().values(),
-                    past_companies=self.past_comp_frame.get_current_selection().values(),
+                    connection_of=self.conn_of_frame.get_current_selection()[0].value,
+                    regions=[x.value for x in self.loc_frame.get_current_selection()],
+                    current_company=[x.value for x in self.current_comp_frame.get_current_selection()],
+                    past_companies=[x.value for x in self.past_comp_frame.get_current_selection()],
                     keywords=self.entry_keywords.get(),
                     keyword_first_name=self.entry_keywords_first_name.get(),
                     keyword_last_name=self.entry_keywords_last_name.get(),
