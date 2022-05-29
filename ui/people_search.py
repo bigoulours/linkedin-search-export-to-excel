@@ -8,17 +8,9 @@ except:
     import utils
     from searchFrame import SearchFrame
 from tkinter import messagebox
-import os
 import threading
 import pandas as pd
 from pandastable import Table, TableModel
-
-
-company_public_ids_filepath = 'resources/Company_public_IDs.txt'
-company_public_ids = []
-if os.path.isfile(company_public_ids_filepath):
-    with open(company_public_ids_filepath, encoding='utf-8') as f:
-        company_public_ids = f.read().split('\n')
 
 
 class PeopleSearch:
@@ -86,9 +78,10 @@ class PeopleSearch:
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
-        # Companies frame
-        self.comp_frame = SearchFrame(search_fields_frame, title='Company', completion_list=company_public_ids)
-        self.comp_frame.pack(side='top', fill="x")
+        # Current Company frame
+        self.current_comp_frame = SearchFrame(search_fields_frame, title='Current Company',
+                                    fetch_fct=lambda x: utils.get_company_urn_ids(linkedin_conn[0], x))
+        self.current_comp_frame.pack(side='top', fill="x")
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
@@ -154,7 +147,7 @@ after which you'll only be able to get 3 results per search until the end of the
 
     def run_search(self):
         keywords = self.entry_keywords.get()
-        company_names = self.comp_frame.get_current_selection().keys()
+        current_companyIDs = self.current_comp_frame.get_current_selection().values()
         keywords_title = self.entry_keywords_title.get()
         locations = self.loc_frame.get_current_selection().values()
         network_depths = []
@@ -165,23 +158,9 @@ after which you'll only be able to get 3 results per search until the end of the
         if self.third_con.get():
             network_depths.append('O')
         try:
-            companyIDs = []
-            for company_name in company_names:
-                try:
-                    company = self.linkedin_conn[0].get_company(company_name)
-                    companyIDs.append(company['entityUrn'].split(":")[-1])
-                except Exception as e:
-                    answer_is_yes = messagebox.askyesno("Warning", "No company found with public ID " + company_name +
-                                                        "\nLook for the public ID of the company on LinkedIn:\n"
-                                                        "https://www.linkedin.com/company/<public ID>\n\n Ignore and proceed anyway?")
-                    if not answer_is_yes:
-                        self.status_str.set("Search cancelled.")
-                        self.parent.update()
-                        return
-
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
-            search_result = self.linkedin_conn[0].search_people(keywords=keywords, network_depths=network_depths, current_company=companyIDs, regions=locations,
-                                            keyword_title=keywords_title, include_private_profiles=False)
+            search_result = self.linkedin_conn[0].search_people(keywords=keywords, network_depths=network_depths, current_company=current_companyIDs, regions=locations,
+                                            keyword_title=keywords_title)
 
             if self.quick_search:
                 self.search_results_df = pd.DataFrame(search_result)
@@ -207,8 +186,6 @@ after which you'll only be able to get 3 results per search until the end of the
                     if profile != {}:
                         if 'geoLocationName' in profile.keys():
                             geolocation = profile['geoLocationName']
-                        elif 'confirmedLocations' in company:
-                            geolocation = company['confirmedLocations'][0]['city']
                         else:
                             geolocation = ""
 

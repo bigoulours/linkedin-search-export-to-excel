@@ -78,3 +78,9 @@ def get_geo_urn_ids(linkedin_conn, search_loc):
     return {g.get('text', {}).get('text', '') : 
             g.get('targetUrn', '').rsplit(':', 1)[-1]
             for g in geo_list}
+
+def get_company_urn_ids(linkedin_conn, search_comp):
+    comp_list = linkedin_conn.get_company_urn_ids(search_comp)
+    return {c.get('text', {}).get('text', '') : 
+            c.get('targetUrn', '').rsplit(':', 1)[-1]
+            for c in comp_list}
