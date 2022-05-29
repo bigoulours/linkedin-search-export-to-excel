@@ -4,9 +4,11 @@ from ttkbootstrap.tooltip import ToolTip
 try:
     from . import utils
     from .searchFrame import SearchFrame
+    from .customWidgets import PlaceholderEntry
 except:
     import utils
     from searchFrame import SearchFrame
+    from customWidgets import PlaceholderEntry
 from tkinter import messagebox
 import threading
 import pandas as pd
@@ -27,67 +29,85 @@ class PeopleSearch:
         self.search_paned_window = ttk.PanedWindow(tk_parent, orient='horizontal')
         self.search_paned_window.pack(side='top', fill="both", expand=True, padx=10)
 
+        ## Search fields Canvas/ScrolledFrame
         search_fields_canvas = ttk.Canvas(self.search_paned_window)
 
         search_fields_frame = ScrolledFrame(search_fields_canvas)
         search_fields_frame.pack(side='top', fill='both', expand=True, padx=5)
         search_fields_frame.hide_scrollbars()
 
-        # Connections
+        ### Connections
         conn_frame = ttk.Frame(search_fields_frame)
         conn_frame.pack(pady=5, side='top', fill='x')
-        label_conn = ttk.Label(conn_frame, text="Connections")
-        label_conn.pack(side='left', expand=False)
+        ttk.Label(conn_frame, text="Connections").pack(side='left', expand=False)
         self.first_con = ttk.BooleanVar()
-        chckbox_first_con = ttk.Checkbutton(conn_frame, text="1st",
-                                                    variable=self.first_con, bootstyle="primary")                                
-        chckbox_first_con.pack(side='left', padx=10)
+        ttk.Checkbutton(conn_frame, text="1st",
+            variable=self.first_con, bootstyle="primary").pack(side='left', padx=10)
 
         self.second_con = ttk.BooleanVar()
-        chckbox_second_con = ttk.Checkbutton(conn_frame, text="2nd",
-                                                    variable=self.second_con, bootstyle="primary")                                
-        chckbox_second_con.pack(side='left', padx=10)
+        ttk.Checkbutton(conn_frame, text="2nd",
+            variable=self.second_con, bootstyle="primary").pack(side='left', padx=10)
 
         self.third_con = ttk.BooleanVar()
-        chckbox_third_con = ttk.Checkbutton(conn_frame, text="3rd+",
-                                                    variable=self.third_con, bootstyle="primary")                                
-        chckbox_third_con.pack(side='left', padx=10)
-
-        # KW-Frame
-        kw_frame = ttk.Frame(search_fields_frame)
-        kw_frame.pack(pady=5, side='top', fill="x")
-        label_keywords = ttk.Label(kw_frame, text="Keywords")
-        label_keywords.pack(side='left', expand=False)
-        self.entry_keywords = ttk.Entry(kw_frame)
-        self.entry_keywords.pack(side='left', expand=True, fill="x", padx=10)
-
-        # KW-Title-Frame
-        kw_title_frame = ttk.Frame(search_fields_frame)
-        kw_title_frame.pack(pady=5, side='top', fill="x")
-        label_keywords_title = ttk.Label(kw_title_frame, text="Keywords Title")
-        label_keywords_title.pack(side='left', expand=False)
-        self.entry_keywords_title = ttk.Entry(kw_title_frame)
-        self.entry_keywords_title.pack(side='left', expand=True, fill="x", padx=10)
+        ttk.Checkbutton(conn_frame, text="3rd+",
+            variable=self.third_con, bootstyle="primary").pack(side='left', padx=10)
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
-        # Location Frame
+        ### Location Frame
         self.loc_frame = SearchFrame(search_fields_frame, title='Location',
                                     fetch_fct=lambda x: utils.get_geo_urn_ids(linkedin_conn[0], x))
         self.loc_frame.pack(side='top', fill="x")
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
-        # Current Company frame
+        ### Current Company frame
         self.current_comp_frame = SearchFrame(search_fields_frame, title='Current Company',
                                     fetch_fct=lambda x: utils.get_company_urn_ids(linkedin_conn[0], x))
         self.current_comp_frame.pack(side='top', fill="x")
 
-        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+        ### KW-Header
+        kw_header_frame = ttk.Frame(search_fields_frame)
+        kw_header_frame.pack(pady=5, side='top', fill="x")
+        ttk.Label(kw_header_frame, text="Keywords").pack(side='left')
+        ttk.Separator(kw_header_frame, orient='horizontal').pack(side='left', fill='x', expand=True)
+
+        ### KW-Frame
+        kw_frame = ttk.Frame(search_fields_frame)
+        kw_frame.pack(pady=5, side='top', fill="x")
+        kw_frame.grid_columnconfigure(0,weight=1)
+        kw_frame.grid_columnconfigure(1,weight=1)
+        kw_frame.grid_rowconfigure(0,weight=1)
+        kw_frame.grid_rowconfigure(1,weight=1)
+        kw_frame.grid_rowconfigure(2,weight=1)
+
+        #### General
+        self.entry_keywords = PlaceholderEntry(kw_frame, 'General')
+        self.entry_keywords.grid(row=0, column=0, sticky='nwse', padx=5, pady=4)
+
+        #### First Name
+        self.entry_keywords_first_name = PlaceholderEntry(kw_frame, 'First Name')
+        self.entry_keywords_first_name.grid(row=0, column=1, sticky='nwse', padx=5, pady=4)
+
+        #### Last Name
+        self.entry_keywords_last_name = PlaceholderEntry(kw_frame, 'Last Name')
+        self.entry_keywords_last_name.grid(row=1, column=0, sticky='nwse', padx=5, pady=4)
+
+        #### Title
+        self.entry_keywords_title = PlaceholderEntry(kw_frame, 'Title')
+        self.entry_keywords_title.grid(row=1, column=1, sticky='nwse', padx=5, pady=4)
+
+        #### Company
+        self.entry_keywords_company = PlaceholderEntry(kw_frame, 'Company')
+        self.entry_keywords_company.grid(row=2, column=0, sticky='nwse', padx=5, pady=4)
+
+        #### School
+        self.entry_keywords_school = PlaceholderEntry(kw_frame, 'School')
+        self.entry_keywords_school.grid(row=2, column=1, sticky='nwse', padx=5, pady=4)
 
         self.search_paned_window.add(search_fields_canvas)
 
-        # Table frame
+        ## Table frame
         self.table_main_frame = ttk.Frame(tk_parent)
         # pandastable
         self.table_frame = ttk.Frame(self.table_main_frame, bootstyle="secondary", borderwidth=2)
@@ -123,14 +143,12 @@ class PeopleSearch:
 after which you'll only be able to get 3 results per search until the end of the month.")
 
         self.get_skills = ttk.BooleanVar()
-        chckbox_get_skills = ttk.Checkbutton(btn_sub_frame, text="Fetch skills",
-                                                    variable=self.get_skills, bootstyle="danger")                            
-        chckbox_get_skills.pack(side='left', padx=10)
+        ttk.Checkbutton(btn_sub_frame, text="Fetch skills",
+            variable=self.get_skills, bootstyle="danger").pack(side='left', padx=10)
 
         self.get_contact_info = ttk.BooleanVar()
-        chckbox_get_contact_info = ttk.Checkbutton(btn_sub_frame, text="Fetch contact info",
-                                                    variable=self.get_contact_info, bootstyle="danger")
-        chckbox_get_contact_info.pack(side='left', padx=10) 
+        ttk.Checkbutton(btn_sub_frame, text="Fetch contact info",
+            variable=self.get_contact_info, bootstyle="danger").pack(side='left', padx=10) 
 
         self.export_to_file_btn = ttk.Button(btn_frame, text="Export to File", state="disabled")
         self.export_to_file_btn.pack(side='left', padx=10)
@@ -140,16 +158,13 @@ after which you'll only be able to get 3 results per search until the end of the
         self.status_frame = ttk.Frame(tk_parent)
         self.status_frame.pack(padx=10, pady=2, side='bottom', expand=False, fill="x")
         self.status_str = ttk.StringVar(value="")
-        self.label_status = ttk.Label(self.status_frame, textvariable=self.status_str)
-        self.label_status.pack(side='left', expand=False)
+        ttk.Label(self.status_frame, textvariable=self.status_str).pack(side='left', expand=False)
 
         ttk.Separator(tk_parent, orient='horizontal').pack(side='bottom', fill='x')
 
     def run_search(self):
-        keywords = self.entry_keywords.get()
-        current_companyIDs = self.current_comp_frame.get_current_selection().values()
-        keywords_title = self.entry_keywords_title.get()
-        locations = self.loc_frame.get_current_selection().values()
+        self.status_str.set("Running search...")
+        self.parent.update()
         network_depths = []
         if self.first_con.get():
             network_depths.append('F')
@@ -159,8 +174,17 @@ after which you'll only be able to get 3 results per search until the end of the
             network_depths.append('O')
         try:
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
-            search_result = self.linkedin_conn[0].search_people(keywords=keywords, network_depths=network_depths, current_company=current_companyIDs, regions=locations,
-                                            keyword_title=keywords_title)
+            search_result = self.linkedin_conn[0].search_people(
+                    network_depths=network_depths,
+                    regions=self.loc_frame.get_current_selection().values(),
+                    current_company=self.current_comp_frame.get_current_selection().values(),
+                    keywords=self.entry_keywords.get(),
+                    keyword_first_name=self.entry_keywords_first_name.get(),
+                    keyword_last_name=self.entry_keywords_last_name.get(),
+                    keyword_title=self.entry_keywords_title.get(),
+                    keyword_company=self.entry_keywords_company.get(),
+                    keyword_school=self.entry_keywords_school.get(),
+                )
 
             if self.quick_search:
                 self.search_results_df = pd.DataFrame(search_result)
@@ -267,13 +291,11 @@ if __name__ == "__main__":
     login_frame = ttk.Frame(root)
     login_frame.pack(pady=10, expand=False, fill="x")
 
-    label_usr = ttk.Label(login_frame, text="User")
-    label_usr.pack(side='left', expand=False, padx=5)
+    ttk.Label(login_frame, text="User").pack(side='left', expand=False, padx=5)
     entry_usr = ttk.Entry(login_frame)
     entry_usr.pack(side='left', expand=True, fill="x", padx=5)
 
-    label_pwd = ttk.Label(login_frame, text="Pwd")
-    label_pwd.pack(side='left', expand=False, padx=5)
+    ttk.Label(login_frame, text="Pwd").pack(side='left', expand=False, padx=5)
     entry_pwd = ttk.Entry(login_frame, show="*")
     entry_pwd.pack(side='left', expand=True, fill="x", padx=5)
 

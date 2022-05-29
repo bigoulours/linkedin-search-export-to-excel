@@ -86,3 +86,34 @@ class AutocompleteCombobox(ttk.Combobox):
 
         self.event_generate('<Button-1>')
 
+
+class PlaceholderEntry(ttk.Entry):
+
+    def __init__(self, container, placeholder, *args, **kwargs):
+        super().__init__(container, *args, **kwargs)
+        self.placeholder = placeholder
+
+        self.placeholder_color = ttk.Style().colors.secondary
+        self.default_fg_color = ttk.Style().colors.inputfg
+        self['foreground'] = self.placeholder_color
+
+        self.insert("0", self.placeholder)
+        self.bind("<FocusIn>", self._clear_placeholder)
+        self.bind("<FocusOut>", self._add_placeholder)
+
+    def _clear_placeholder(self, e):
+        dbg = self['foreground']
+        if self['foreground'].string == self.placeholder_color:
+            self.delete("0", "end")
+            self['foreground'] = self.default_fg_color
+
+    def _add_placeholder(self, e):
+        if not self.get():
+            self.insert("0", self.placeholder)
+            self['foreground'] = self.placeholder_color
+
+    def get(self):
+        if self['foreground'].string == self.placeholder_color:
+            return ''
+        else:
+            return super().get()
