@@ -6,6 +6,7 @@ PADDING = 1
 class RemovableLabel(ttk.Frame):
     def __init__(self, parent_widget, label_name, value=None, **kw):
         super().__init__(parent_widget, **kw)
+        self.parent = parent_widget
         self.lbl_name = label_name
         self.value = value
         self.configure(borderwidth=1, relief="solid")
@@ -17,6 +18,10 @@ class RemovableLabel(ttk.Frame):
 
     def destroy(self) -> None:
         super().destroy()
+        try:
+            self.parent.resize_text_box()
+        except:
+            pass
         return
 
 class AutocompleteCombobox(ttk.Combobox):
@@ -70,7 +75,7 @@ class AutocompleteCombobox(ttk.Combobox):
                                     value=self._completion_dict.get(self.string_var.get(), None))
             self.scrolled_text.window_create("insert", window=rm_lbl, padx=3, pady=2)
         self.set('')
-        self.parent.update()
+        self.parent.resize_text_box()
     
     def autocomplete_fetch(self):
         """fetch dropdown content"""
@@ -102,7 +107,6 @@ class PlaceholderEntry(ttk.Entry):
         self.bind("<FocusOut>", self._add_placeholder)
 
     def _clear_placeholder(self, e):
-        dbg = self['foreground']
         if self['foreground'].string == self.placeholder_color:
             self.delete("0", "end")
             self['foreground'] = self.default_fg_color

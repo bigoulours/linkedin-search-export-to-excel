@@ -66,6 +66,13 @@ class PeopleSearch:
                                     fetch_fct=lambda x: utils.get_company_urn_ids(linkedin_conn[0], x))
         self.current_comp_frame.pack(side='top', fill="x")
 
+        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+
+        ### Past Company frame
+        self.past_comp_frame = SearchFrame(search_fields_frame, title='Past Company',
+                                    fetch_fct=lambda x: utils.get_company_urn_ids(linkedin_conn[0], x))
+        self.past_comp_frame.pack(side='top', fill="x", pady=5)
+
         ### KW-Header
         kw_header_frame = ttk.Frame(search_fields_frame)
         kw_header_frame.pack(pady=5, side='top', fill="x")
@@ -178,6 +185,7 @@ after which you'll only be able to get 3 results per search until the end of the
                     network_depths=network_depths,
                     regions=self.loc_frame.get_current_selection().values(),
                     current_company=self.current_comp_frame.get_current_selection().values(),
+                    past_companies=self.past_comp_frame.get_current_selection().values(),
                     keywords=self.entry_keywords.get(),
                     keyword_first_name=self.entry_keywords_first_name.get(),
                     keyword_last_name=self.entry_keywords_last_name.get(),
