@@ -14,6 +14,5 @@ PyInstaller.__main__.run([
     '-y',
     '--icon=images/linkedin.ico',
     '--add-data=images/linkedin.ico;images/',
-    '--add-data=resources/*;resources/',
     f'--add-data={conf_name};.',
 ])

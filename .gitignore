@@ -1,4 +1,6 @@
 *.pyc
 .idea/
 .vscode/
+build/
+dist/
 linkedInSearch_login
