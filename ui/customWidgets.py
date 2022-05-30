@@ -1,6 +1,6 @@
-from tkinter import StringVar
 import ttkbootstrap as ttk
 from ttkbootstrap.scrolled import ScrolledText
+from ttkbootstrap.tooltip import ToolTip
 
 PADDING = 1
 
@@ -8,7 +8,7 @@ class RemovableLabel(ttk.Frame):
     def __init__(self, parent_widget, label_name, value=None, **kw):
         super().__init__(parent_widget, **kw)
         self.parent = parent_widget
-        self.lbl_name = StringVar()
+        self.lbl_name = ttk.StringVar()
         self.lbl_name.set(label_name)
         self.value = value
         self.configure(borderwidth=1, relief="solid")
@@ -21,6 +21,7 @@ class RemovableLabel(ttk.Frame):
     def destroy(self) -> None:
         super().destroy()
         try:
+            # updating parent size if no more element:
             self.parent.resize_text_box()
         except:
             pass
@@ -66,6 +67,7 @@ class AutocompleteCombobox(ttk.Combobox):
             self.autocomplete() 
     
     def set_selection_text(self, parent_widget, selection_txt: ScrolledText):
+        # to be used inside SearchFrame
         self.scrolled_text = selection_txt
         self.parent = parent_widget
         self.bind('<<ComboboxSelected>>', self.add_selection_to_scrolled_text)
@@ -98,6 +100,54 @@ class AutocompleteCombobox(ttk.Combobox):
                 print("Fetch function returned neither a list nor a dict. Not filling dropdown...")
 
         self.event_generate('<Button-1>')
+
+
+class SearchFrame(ttk.Frame):
+    def __init__(self, parent_widget, title='', completion_list=None, fetch_fct=None, single_choice=False):
+        super().__init__(parent_widget)
+        self.parent=parent_widget
+        first_row = ttk.Frame(self)
+        first_row.pack(side='top', fill='x', pady=5)
+        self.label = ttk.Label(first_row, text=title)
+        self.label.pack(side='left', expand=False)
+        ToolTip(self.label, text=f"Type characters matching the desired {title} and press <Down> to show available options.")
+        self.entry = AutocompleteCombobox(first_row, completion_list=completion_list, 
+                            fetch_fct=fetch_fct, single_choice=single_choice)
+        self.entry.pack(side='left', expand=True, fill="x", padx=10)
+
+        second_row = ttk.Frame(self)
+        second_row.pack(side='top', fill='x', pady=5)
+        if single_choice:
+            vbar=False
+        else:
+            vbar=True
+        self.labels_text_box = ScrolledText(second_row, wrap="word", height=0, autohide=True, vbar=vbar)
+        self.labels_text_box.pack(side='top', fill='x', padx=5, expand=True)
+        self.labels_text_box._text.configure(state="disabled", highlightthickness = 0, borderwidth=0)
+        self.labels_text_box.bind( "<Configure>", self.resize_text_box)
+
+        self.entry.set_selection_text(self, self.labels_text_box)
+
+    def get_current_selection(self):
+        return [self.nametowidget(x[1])
+                for x in self.labels_text_box.dump('1.0', 'end-1c', window=True)
+                if x[1]]
+
+    def resize_text_box(self, *args):
+        # cleaning old labels:
+        for lbl in self.labels_text_box.dump("1.0", "end", window=True)[::-1]:
+            if not lbl[1]:
+                self.labels_text_box.delete(lbl[2])
+        # resizing if necessary:
+        if self.get_current_selection():
+            self.labels_text_box._text.configure(height=3)
+            self.labels_text_box.pack(side='top', fill='x', padx=5, expand=True)
+            self.update()
+        else:
+            self.labels_text_box._text.configure(height=0)
+            self.update()
+            self.labels_text_box.forget()
+            self.update()
 
 
 class PlaceholderEntry(ttk.Entry):

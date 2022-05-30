@@ -3,12 +3,10 @@ from ttkbootstrap.scrolled import ScrolledFrame
 from ttkbootstrap.tooltip import ToolTip
 try:
     from . import utils
-    from .searchFrame import SearchFrame
-    from .customWidgets import PlaceholderEntry
+    from .customWidgets import SearchFrame, PlaceholderEntry
 except:
     import utils
-    from searchFrame import SearchFrame
-    from customWidgets import PlaceholderEntry
+    from customWidgets import SearchFrame, PlaceholderEntry
 from tkinter import messagebox
 import threading
 import pandas as pd
@@ -186,11 +184,15 @@ after which you'll only be able to get 3 results per search until the end of the
             network_depths.append('S')
         if self.third_con.get():
             network_depths.append('O')
+        if self.conn_of_frame.get_current_selection():
+            connection_of = self.conn_of_frame.get_current_selection()[0].value
+        else:
+            connection_of = None
         try:
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
             search_result = self.linkedin_conn[0].search_people(
                     network_depths=network_depths,
-                    connection_of=self.conn_of_frame.get_current_selection()[0].value,
+                    connection_of=connection_of,
                     regions=[x.value for x in self.loc_frame.get_current_selection()],
                     current_company=[x.value for x in self.current_comp_frame.get_current_selection()],
                     past_companies=[x.value for x in self.past_comp_frame.get_current_selection()],
@@ -246,8 +248,9 @@ after which you'll only be able to get 3 results per search until the end of the
 
                         if self.get_contact_info.get():
                             contact_info = self.linkedin_conn[0].get_profile_contact_info(urn_id=people['urn_id'])
+                            contact_info = {k: [v] for k,v in contact_info.items()}
                             profile_dict.update(contact_info)
-
+                        
                         self.search_results_df = pd.concat([self.search_results_df,
                                                     pd.DataFrame(profile_dict)])
 
