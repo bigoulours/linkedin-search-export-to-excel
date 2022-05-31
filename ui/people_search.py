@@ -36,7 +36,7 @@ class PeopleSearch:
 
         ### Connections
         conn_frame = ttk.Frame(search_fields_frame)
-        conn_frame.pack(pady=5, side='top', fill='x')
+        conn_frame.pack(pady=10, side='top', fill='x')
         ttk.Label(conn_frame, text="Connections").pack(side='left', expand=False)
         self.first_con = ttk.BooleanVar()
         ttk.Checkbutton(conn_frame, text="1st",
@@ -77,6 +77,20 @@ class PeopleSearch:
         self.past_comp_frame = SearchFrame(search_fields_frame, title='Past Company',
                     fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_company_urn_ids, x))
         self.past_comp_frame.pack(side='top', fill="x", pady=5)
+
+        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+
+        ### School frame
+        self.school_frame = SearchFrame(search_fields_frame, title='School',
+                    fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_school_urn_ids, x))
+        self.school_frame.pack(side='top', fill="x", pady=5)
+
+        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+
+        ### Industry frame
+        self.industry_frame = SearchFrame(search_fields_frame, title='Industry',
+                    fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_industry_urn_ids, x))
+        self.industry_frame.pack(side='top', fill="x", pady=5)
 
         ### KW-Header
         kw_header_frame = ttk.Frame(search_fields_frame)
@@ -196,6 +210,8 @@ after which you'll only be able to get 3 results per search until the end of the
                     regions=[x.value for x in self.loc_frame.get_current_selection()],
                     current_company=[x.value for x in self.current_comp_frame.get_current_selection()],
                     past_companies=[x.value for x in self.past_comp_frame.get_current_selection()],
+                    schools=[x.value for x in self.school_frame.get_current_selection()],
+                    industries=[x.value for x in self.industry_frame.get_current_selection()],
                     keywords=self.entry_keywords.get(),
                     keyword_first_name=self.entry_keywords_first_name.get(),
                     keyword_last_name=self.entry_keywords_last_name.get(),
