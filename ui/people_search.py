@@ -37,7 +37,9 @@ class PeopleSearch:
         ### Connections
         conn_frame = ttk.Frame(search_fields_frame)
         conn_frame.pack(pady=10, side='top', fill='x')
-        ttk.Label(conn_frame, text="Connections").pack(side='left', expand=False)
+        conn_lbl = ttk.Label(conn_frame, text="Connections")
+        conn_lbl.pack(side='left', expand=False)
+        ToolTip(conn_lbl, text=f"Degree of Connection with the logged in user.")
         self.first_con = ttk.BooleanVar()
         ttk.Checkbutton(conn_frame, text="1st",
             variable=self.first_con, bootstyle="primary").pack(side='left', padx=10)
@@ -169,12 +171,16 @@ class PeopleSearch:
 after which you'll only be able to get 3 results per search until the end of the month.")
 
         self.get_skills = ttk.BooleanVar()
-        ttk.Checkbutton(btn_sub_frame, text="Fetch skills",
-            variable=self.get_skills, bootstyle="danger").pack(side='left', padx=10)
+        skills_chk_btn= ttk.Checkbutton(btn_sub_frame, text="Fetch skills",
+                                variable=self.get_skills, bootstyle="danger")
+        skills_chk_btn.pack(side='left', padx=10)
+        ToolTip(skills_chk_btn, text=f"Run an additional request to add skills to the result.")
 
         self.get_contact_info = ttk.BooleanVar()
-        ttk.Checkbutton(btn_sub_frame, text="Fetch contact info",
-            variable=self.get_contact_info, bootstyle="danger").pack(side='left', padx=10) 
+        contact_info_chk_btn = ttk.Checkbutton(btn_sub_frame, text="Fetch contact info",
+                                    variable=self.get_contact_info, bootstyle="danger")
+        contact_info_chk_btn.pack(side='left', padx=10)
+        ToolTip(contact_info_chk_btn, text=f"Run an additional request to add contact info to the result.")
 
         self.export_to_file_btn = ttk.Button(btn_frame, text="Export to File", state="disabled")
         self.export_to_file_btn.pack(side='left', padx=10)

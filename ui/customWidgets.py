@@ -108,9 +108,9 @@ class SearchFrame(ttk.Frame):
         self.parent=parent_widget
         first_row = ttk.Frame(self)
         first_row.pack(side='top', fill='x', pady=5)
-        self.label = ttk.Label(first_row, text=title)
-        self.label.pack(side='left', expand=False)
-        #ToolTip(self.label, text=f"Type characters matching the desired {title} and press <Down> to show available options.")
+        label = ttk.Label(first_row, text=title)
+        label.pack(side='left', expand=False)
+        ToolTip(label, text=f"Type characters matching the desired {title} and press <Down> to show available options.")
         self.entry = AutocompleteCombobox(first_row, completion_list=completion_list, 
                             fetch_fct=fetch_fct, single_choice=single_choice)
         self.entry.pack(side='left', expand=True, fill="x", padx=10)
