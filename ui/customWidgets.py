@@ -116,7 +116,7 @@ class SearchFrame(ttk.Frame):
         self.entry.pack(side='left', expand=True, fill="x", padx=10)
 
         second_row = ttk.Frame(self)
-        second_row.pack(side='top', fill='x', pady=5)
+        second_row.pack(side='top', fill='x')
         if single_choice:
             vbar=False
         else:
