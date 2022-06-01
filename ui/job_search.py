@@ -1,3 +1,4 @@
+from textwrap import fill
 import ttkbootstrap as ttk
 from ttkbootstrap.scrolled import ScrolledFrame
 from ttkbootstrap.tooltip import ToolTip
@@ -43,21 +44,34 @@ class JobSearch:
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
         
-        ### Sort by Frame   #todo: replace with Option-Menu? (dropdown)
-        self.sort_frame = SearchFrame(search_fields_frame, title='Sort by', single_choice=True,
-                            completion_dict={"Most recent": "RECENT", "Most relevant": "RELEVANT"})
-        self.sort_frame.pack(side='top', fill="x")
+        ### Radio Frame
+        radio_frame = ttk.Frame(search_fields_frame)
+        radio_frame.pack(side='top', fill="x", pady=5, expand=True)
+        radio_frame.grid_columnconfigure(0,weight=0)
+        radio_frame.grid_columnconfigure(1,weight=0)
+        radio_frame.grid_columnconfigure(2,weight=1)
 
-        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+        #### Sort by
+        ttk.Label(radio_frame, text="Sort by").grid(row=0, column=0, sticky='nwse')
 
-        ### Date Posted     #todo: replace with Option-Menu? (dropdown)
-        self.date_posted_frame = SearchFrame(search_fields_frame, title='Date posted', single_choice=True,
-                            completion_dict={
-                                            "Past 24 Hours": "DAY",
-                                            "Past Week": "WEEK",
-                                            "Past Month": "MONTH",
-                                            "Any Time": "ANY"})
-        self.date_posted_frame.pack(side='top', fill="x")
+        self.sort_by = ttk.StringVar()
+        ttk.Radiobutton(radio_frame, text='Most recent', variable=self.sort_by, value="RECENT").grid(row=0, column=1, padx=10, sticky='nwse')
+        ttk.Radiobutton(radio_frame, text='Most relevant', variable=self.sort_by, value="RELEVANT").grid(row=0, column=2, padx=10, sticky='nwse')
+
+        ttk.Separator(radio_frame, orient='horizontal').grid(row=1, columnspan=3, pady=5, sticky='nwse')
+
+        #### Date Posted
+        ttk.Label(radio_frame, text="Date Posted").grid(row=2, column=0, sticky='nwse', pady=5)
+
+        self.date_posted = ttk.StringVar()
+        ttk.Radiobutton(radio_frame, text='Past 24h', variable=self.date_posted,
+                        value="DAY").grid(row=3, column=1, padx=10, pady=4, sticky='nwse')
+        ttk.Radiobutton(radio_frame, text='Past Week', variable=self.date_posted,
+                        value="WEEK").grid(row=3, column=2, padx=10, pady=4, sticky='nwse')
+        ttk.Radiobutton(radio_frame, text='Past Month', variable=self.date_posted,
+                        value="MONTH").grid(row=4, column=1, padx=10, pady=4, sticky='nwse')
+        ttk.Radiobutton(radio_frame, text='Any Time', variable=self.date_posted,
+                        value="ANY").grid(row=4, column=2, padx=10, pady=4, sticky='nwse')
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
