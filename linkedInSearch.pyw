@@ -48,10 +48,12 @@ def connect_linkedin():
     # Authenticate using any Linkedin account credentials
     try:
         linkedin_conn[0] = Linkedin(entry_usr.get(), entry_pwd.get(),cookies_dir=config_dict.get('General',{}).get('cookies_dir', 'cookies/'))
-        messagebox.showinfo("Success", "Successfully logged into LinkedIn.")
+        messagebox.showinfo("Success", "Successfully logged into LinkedIn.", icon='info')
 
     except Exception as e:
-        messagebox.showinfo("Error", "Login failed!\nCheck username and password.\n2FA must be disabled in LinkedIn settings.")
+        messagebox.showinfo("Error",
+                "Login failed!\nCheck username and password.\n2FA must be disabled in LinkedIn settings.",
+                icon='error')
         return
 
 connect_btn['command'] = connect_linkedin

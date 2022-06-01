@@ -231,7 +231,9 @@ after which you'll only be able to get 3 results per search until the end of the
                 self.parent.update()
 
                 if result_size > 999:
-                    answer_is_yes = messagebox.askyesno("Too many results!", "This search yields more than 1000 results (upper limit for this app).\nProceed anyway?")
+                    answer_is_yes = messagebox.askyesno("Too many results!",
+                            "This search yields more than 1000 results (upper limit for this app).\nProceed anyway?",
+                            icon="warning")
                     if not answer_is_yes:
                         self.status_str.set("Search cancelled.")
                         self.parent.update()
@@ -288,10 +290,12 @@ after which you'll only be able to get 3 results per search until the end of the
 
     def create_search_thread(self):
         if not self.linkedin_conn[0]:
-            messagebox.showinfo("Error", "First log into Linkedin!")
+            messagebox.showinfo("Error", "First log into Linkedin!", icon="error")
             return
         if self.search_thread and self.search_thread.is_alive():
-            messagebox.showinfo("Search in progress", "Another search is still running.\nWait until it finishes or restart the program.")
+            messagebox.showinfo("Search in progress",
+                        "Another search is still running.\nWait until it finishes or restart the program.",
+                        icon="warning")
             return
         self.search_thread = threading.Thread(target=self.run_search)
         self.search_thread.daemon = True
@@ -343,10 +347,12 @@ if __name__ == "__main__":
         # Authenticate using any Linkedin account credentials
         try:
             linkedin_conn[0] = Linkedin(entry_usr.get(), entry_pwd.get())
-            messagebox.showinfo("Success", "Successfully logged into LinkedIn.")
+            messagebox.showinfo("Success", "Successfully logged into LinkedIn.", icon="info")
 
         except Exception as e:
-            messagebox.showinfo("Error", "Login failed!\nCheck username and password.\n2FA must be disabled in LinkedIn settings.")
+            messagebox.showinfo("Error",
+                    "Login failed!\nCheck username and password.\n2FA must be disabled in LinkedIn settings.",
+                    icon="error")
             return
 
     connect_btn['command'] = connect_linkedin
