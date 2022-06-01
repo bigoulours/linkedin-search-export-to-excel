@@ -174,13 +174,13 @@ after which you'll only be able to get 3 results per search until the end of the
         skills_chk_btn= ttk.Checkbutton(btn_sub_frame, text="Fetch skills",
                                 variable=self.get_skills, bootstyle="danger")
         skills_chk_btn.pack(side='left', padx=10)
-        ToolTip(skills_chk_btn, text=f"Run an additional request to add skills to the result.")
+        ToolTip(skills_chk_btn, text=f"Fetch skills by running one additional request per result.")
 
         self.get_contact_info = ttk.BooleanVar()
         contact_info_chk_btn = ttk.Checkbutton(btn_sub_frame, text="Fetch contact info",
                                     variable=self.get_contact_info, bootstyle="danger")
         contact_info_chk_btn.pack(side='left', padx=10)
-        ToolTip(contact_info_chk_btn, text=f"Run an additional request to add contact info to the result.")
+        ToolTip(contact_info_chk_btn, text=f"Fetch contact info by running one additional request per result.")
 
         self.export_to_file_btn = ttk.Button(btn_frame, text="Export to File", state="disabled")
         self.export_to_file_btn.pack(side='left', padx=10)
