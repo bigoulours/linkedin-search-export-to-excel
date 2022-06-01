@@ -74,7 +74,7 @@ class AutocompleteCombobox(ttk.Combobox):
 
     def add_selection_to_scrolled_text(self, event):
         curr_sel = self.parent.get_current_selection()
-        if self.string_var.get() in curr_sel:
+        if self.string_var.get() in [x.lbl_name.get() for x in curr_sel]:
             pass
         else:
             rm_lbl = RemovableLabel(self.parent, self.string_var.get(), 
