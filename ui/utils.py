@@ -5,6 +5,7 @@ import pandas as pd
 import xlsxwriter
 from ttkbootstrap import Style
 from pandastable import Table
+from linkedin_api import linkedin
 
 def show_exception(e):
     exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -71,3 +72,9 @@ def save_dataframe_to_file(dataframe, keep_index=True, json_orient="records"):
         dataframe.to_json(chosen_file.name, index=keep_index, orient=json_orient, indent=4)
 
     return chosen_file.name
+
+def extract_urn_dict_from_query_results(linkedin_meth, search_kw):
+    res = linkedin_meth(search_kw)
+    return {x.get('text', {}).get('text', '') : 
+            x.get('targetUrn', '').rsplit(':', 1)[-1]
+            for x in res}
