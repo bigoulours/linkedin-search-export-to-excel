@@ -42,11 +42,35 @@ class JobSearch:
         self.entry_keywords.pack(side='left', padx=10, fill='x', expand=True)
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+        
+        ### Sort by Frame   #todo: replace with Option-Menu? (dropdown)
+        self.sort_frame = SearchFrame(search_fields_frame, title='Sort by', single_choice=True,
+                            completion_dict={"Most recent": "RECENT", "Most relevant": "RELEVANT"})
+        self.sort_frame.pack(side='top', fill="x")
 
-        ### Location Frame
-        self.loc_frame = SearchFrame(search_fields_frame, title='Location',
-                    fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_geo_urn_ids, x))
-        self.loc_frame.pack(side='top', fill="x")
+        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+
+        ### Date Posted     #todo: replace with Option-Menu? (dropdown)
+        self.date_posted_frame = SearchFrame(search_fields_frame, title='Date posted', single_choice=True,
+                            completion_dict={
+                                            "Past 24 Hours": "DAY",
+                                            "Past Week": "WEEK",
+                                            "Past Month": "MONTH",
+                                            "Any Time": "ANY"})
+        self.date_posted_frame.pack(side='top', fill="x")
+
+        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+
+        ### Experience
+        self.exp_frame = SearchFrame(search_fields_frame, title='Experience',
+                            completion_dict={
+                                            "Internship": "INTERNSHIP",
+                                            "Entry level": "ENTRY_LEVEL",
+                                            "Associate": "ASSOCIATE",
+                                            "Mid-Senior level": "MID_SENIOR",
+                                            "Director": "DIRECTOR",
+                                            "Executive": "EXECUTIVE"})
+        self.exp_frame.pack(side='top', fill="x")
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
@@ -54,6 +78,27 @@ class JobSearch:
         self.comp_frame = SearchFrame(search_fields_frame, title='Company',
                     fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_company_urn_ids, x))
         self.comp_frame.pack(side='top', fill="x")
+
+        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+
+        ### Job Type
+        self.job_type_frame = SearchFrame(search_fields_frame, title='Job Type',
+                            completion_dict={
+                                            "Full-time": "FULL_TIME",
+                                            "Part-time": "PART_TIME",
+                                            "Temporary": "TEMPORARY",
+                                            "Contract": "CONTRACT",
+                                            "Volunteer": "VOLUNTEER",
+                                            "Internship": "INTERNSHIP",
+                                            "Other": "OTHER"})
+        self.job_type_frame.pack(side='top', fill="x")
+
+        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+
+        ### Location Frame
+        self.loc_frame = SearchFrame(search_fields_frame, title='Location',
+                    fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_geo_urn_ids, x))
+        self.loc_frame.pack(side='top', fill="x")
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
@@ -151,43 +196,43 @@ after which you'll only be able to get 3 results per search until the end of the
 
                 row = 1
 
-                # for people in search_result:
-                #     profile = self.linkedin_conn[0].get_profile(urn_id=people['urn_id'])
-                #     if profile != {}:
-                #         if 'geoLocationName' in profile.keys():
-                #             geolocation = profile['geoLocationName']
-                #         else:
-                #             geolocation = ""
+                for job in search_result:
+                    profile = self.linkedin_conn[0].get_profile(urn_id=job['urn_id'])
+                    if profile != {}:
+                        if 'geoLocationName' in profile.keys():
+                            geolocation = profile['geoLocationName']
+                        else:
+                            geolocation = ""
 
-                #         profile_dict = {
-                #             'First Name': [profile['firstName']],
-                #             'Last Name': [profile['lastName']],
-                #             'Title': [profile['experience'][0]['title']],
-                #             'Company': [profile['experience'][0]['companyName']],
-                #             'Location': [geolocation],
-                #             'Headline': [profile['headline']],
-                #             'Profile Link': ['https://www.linkedin.com/in/' + profile['profile_id']]
-                #         }
+                        profile_dict = {
+                            'First Name': [profile['firstName']],
+                            'Last Name': [profile['lastName']],
+                            'Title': [profile['experience'][0]['title']],
+                            'Company': [profile['experience'][0]['companyName']],
+                            'Location': [geolocation],
+                            'Headline': [profile['headline']],
+                            'Profile Link': ['https://www.linkedin.com/in/' + profile['profile_id']]
+                        }
 
-                #         if self.get_skills.get():
-                #             skills_raw = self.linkedin_conn[0].get_profile_skills(urn_id=people['urn_id'])
-                #             skills = [dic['name'] for dic in skills_raw]
-                #             profile_dict.update({'Skills': [skills]})
+                        if self.get_skills.get():
+                            skills_raw = self.linkedin_conn[0].get_profile_skills(urn_id=job['urn_id'])
+                            skills = [dic['name'] for dic in skills_raw]
+                            profile_dict.update({'Skills': [skills]})
 
-                #         if self.get_contact_info.get():
-                #             contact_info = self.linkedin_conn[0].get_profile_contact_info(urn_id=people['urn_id'])
-                #             contact_info = {k: [v] for k,v in contact_info.items()}
-                #             profile_dict.update(contact_info)
+                        if self.get_contact_info.get():
+                            contact_info = self.linkedin_conn[0].get_profile_contact_info(urn_id=job['urn_id'])
+                            contact_info = {k: [v] for k,v in contact_info.items()}
+                            profile_dict.update(contact_info)
                         
-                #         self.search_results_df = pd.concat([self.search_results_df,
-                #                                     pd.DataFrame(profile_dict)])
+                        self.search_results_df = pd.concat([self.search_results_df,
+                                                    pd.DataFrame(profile_dict)])
 
-                #         self.table.updateModel(TableModel(self.search_results_df))
-                #         self.table.redraw()
-                #         self.status_str.set("Scanned " + str(row) + " out of " + str(result_size) + " profiles")
-                #         self.parent.update()
+                        self.table.updateModel(TableModel(self.search_results_df))
+                        self.table.redraw()
+                        self.status_str.set("Scanned " + str(row) + " out of " + str(result_size) + " profiles")
+                        self.parent.update()
 
-                #         row += 1
+                        row += 1
 
             self.export_to_file_btn.configure(state="normal")
             self.status_str.set("Done")

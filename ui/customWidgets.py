@@ -103,16 +103,22 @@ class AutocompleteCombobox(ttk.Combobox):
 
 
 class SearchFrame(ttk.Frame):
-    def __init__(self, parent_widget, title='', completion_list=None, fetch_fct=None, single_choice=False):
+    def __init__(self,  parent_widget,
+                        title='',
+                        completion_list=None, 
+                        completion_dict=None,
+                        fetch_fct=None,
+                        single_choice=False):
         super().__init__(parent_widget)
         self.parent=parent_widget
         first_row = ttk.Frame(self)
         first_row.pack(side='top', fill='x', pady=5)
         label = ttk.Label(first_row, text=title)
         label.pack(side='left', expand=False)
-        ToolTip(label, text=f"Type characters matching the desired {title} and press <Down> to show available options.")
+        if fetch_fct:
+            ToolTip(label, text=f"Type characters matching the desired {title} and press <Down> to show available options.")
         self.entry = AutocompleteCombobox(first_row, completion_list=completion_list, 
-                            fetch_fct=fetch_fct, single_choice=single_choice)
+                            completion_dict=completion_dict, fetch_fct=fetch_fct, single_choice=single_choice)
         self.entry.pack(side='left', expand=True, fill="x", padx=10)
 
         second_row = ttk.Frame(self)
