@@ -76,15 +76,41 @@ class JobSearch:
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
         ### Experience
-        self.exp_frame = SearchFrame(search_fields_frame, title='Experience',
-                            completion_dict={
-                                            "Internship": "INTERNSHIP",
-                                            "Entry level": "ENTRY_LEVEL",
-                                            "Associate": "ASSOCIATE",
-                                            "Mid-Senior level": "MID_SENIOR",
-                                            "Director": "DIRECTOR",
-                                            "Executive": "EXECUTIVE"})
-        self.exp_frame.pack(side='top', fill="x")
+        exp_frame = ttk.Frame(search_fields_frame)
+        exp_frame.pack(side='top', fill="x")
+        exp_frame.grid_columnconfigure(0,weight=0)
+        exp_frame.grid_columnconfigure(1,weight=0)
+        exp_frame.grid_columnconfigure(2,weight=1)
+        ttk.Label(exp_frame, text="Experience").grid(row=0, column=0, pady=4, sticky='nwse')
+
+        intern_lvl_bool = ttk.BooleanVar()
+        entry_lvl_bool = ttk.BooleanVar()
+        associate_bool = ttk.BooleanVar()
+        mid_senior_bool = ttk.BooleanVar()
+        director_bool = ttk.BooleanVar()
+        executive_bool = ttk.BooleanVar()
+
+        self.exp_dict_list = [
+                {'bool_val': intern_lvl_bool, 'name': '1'},
+                {'bool_val': entry_lvl_bool, 'name': '2'},
+                {'bool_val': associate_bool, 'name': '3'},
+                {'bool_val': mid_senior_bool, 'name': '4'},
+                {'bool_val': director_bool, 'name': '5'},
+                {'bool_val': executive_bool, 'name': '6'},
+        ]
+
+        ttk.Checkbutton(exp_frame, text="Internship",
+                variable=intern_lvl_bool).grid(row=1, column=0, padx=5, pady=4, sticky='nwse')
+        ttk.Checkbutton(exp_frame, text="Entry level",
+                variable=entry_lvl_bool).grid(row=1, column=1, padx=5, pady=4, sticky='nwse')
+        ttk.Checkbutton(exp_frame, text="Associate",
+                variable=associate_bool).grid(row=1, column=2, padx=5, pady=4, sticky='nwse')
+        ttk.Checkbutton(exp_frame, text="Mid-Senior level",
+                variable=mid_senior_bool).grid(row=2, column=0, padx=5, pady=4, sticky='nwse')
+        ttk.Checkbutton(exp_frame, text="Director",
+                variable=director_bool).grid(row=2, column=1, padx=5, pady=4, sticky='nwse')
+        ttk.Checkbutton(exp_frame, text="Executive",
+                variable=executive_bool).grid(row=2, column=2, padx=5, pady=4, sticky='nwse')
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
@@ -96,17 +122,46 @@ class JobSearch:
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
         ### Job Type
-        self.job_type_frame = SearchFrame(search_fields_frame, title='Job Type',
-                            completion_dict={
-                                            "Full-time": "FULL_TIME",
-                                            "Part-time": "PART_TIME",
-                                            "Temporary": "TEMPORARY",
-                                            "Contract": "CONTRACT",
-                                            "Volunteer": "VOLUNTEER",
-                                            "Internship": "INTERNSHIP",
-                                            "Other": "OTHER"})
-        self.job_type_frame.pack(side='top', fill="x")
+        job_type_frame = ttk.Frame(search_fields_frame)
+        job_type_frame.pack(side='top', fill="x")
+        job_type_frame.grid_columnconfigure(0,weight=0)
+        job_type_frame.grid_columnconfigure(1,weight=0)
+        job_type_frame.grid_columnconfigure(2,weight=1)
+        ttk.Label(job_type_frame, text="Job Type").grid(row=0, column=0, pady=4, sticky='nwse')
 
+        full_time_bool = ttk.BooleanVar()
+        part_time_bool = ttk.BooleanVar()
+        temporary_bool = ttk.BooleanVar()
+        contract_bool = ttk.BooleanVar()
+        volunteer_bool = ttk.BooleanVar()
+        intern_type_bool = ttk.BooleanVar()
+        other_type_bool = ttk.BooleanVar()
+
+        self.job_type_dict_list = [
+                {'bool_val': full_time_bool, 'name': 'F'},
+                {'bool_val': part_time_bool, 'name': 'P'},
+                {'bool_val': temporary_bool, 'name': 'T'},
+                {'bool_val': contract_bool, 'name': 'C'},
+                {'bool_val': volunteer_bool, 'name': 'V'},
+                {'bool_val': intern_type_bool, 'name': 'I'},
+                {'bool_val': other_type_bool, 'name': 'O'},
+        ]
+
+        ttk.Checkbutton(job_type_frame, text="Other",
+                variable=other_type_bool).grid(row=0, column=2, padx=10, pady=4, sticky='nwse')
+        ttk.Checkbutton(job_type_frame, text="Full-time",
+                variable=full_time_bool).grid(row=1, column=0, padx=10, pady=4, sticky='nwse')
+        ttk.Checkbutton(job_type_frame, text="Part-time",
+                variable=part_time_bool).grid(row=1, column=1, padx=10, pady=4, sticky='nwse')
+        ttk.Checkbutton(job_type_frame, text="Temporary",
+                variable=temporary_bool).grid(row=1, column=2, padx=10, pady=4, sticky='nwse')
+        ttk.Checkbutton(job_type_frame, text="Contract",
+                variable=contract_bool).grid(row=2, column=0, padx=10, pady=4, sticky='nwse')
+        ttk.Checkbutton(job_type_frame, text="Volunteer",
+                variable=volunteer_bool).grid(row=2, column=1, padx=10, pady=4, sticky='nwse')
+        ttk.Checkbutton(job_type_frame, text="Internship",
+                variable=intern_type_bool).grid(row=2, column=2, padx=10, pady=4, sticky='nwse')
+        
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
         ### Location Frame
@@ -185,6 +240,8 @@ after which you'll only be able to get 3 results per search until the end of the
             search_result = self.linkedin_conn[0].search_jobs(
                     keywords=self.entry_keywords.get(),
                     companies=[x.value for x in self.comp_frame.get_current_selection()],
+                    experience=[x['name'] for x in self.exp_dict_list if x['bool_val'].get()],
+                    job_type=[x['name'] for x in self.job_type_dict_list if x['bool_val'].get()],
                     industries=[x.value for x in self.industry_frame.get_current_selection()],
                     location_name=[x.lbl_name.get() for x in self.loc_frame.get_current_selection()],
                 )
