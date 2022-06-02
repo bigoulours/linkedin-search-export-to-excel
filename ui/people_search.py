@@ -195,6 +195,9 @@ after which you'll only be able to get 3 results per search until the end of the
         ttk.Separator(tk_parent, orient='horizontal').pack(side='bottom', fill='x')
 
     def run_search(self):
+        self.search_results_df = pd.DataFrame()
+        self.table.updateModel(TableModel(self.search_results_df))
+        self.table.redraw()
         self.status_str.set("Running search...")
         self.parent.update()
         network_depths = []
