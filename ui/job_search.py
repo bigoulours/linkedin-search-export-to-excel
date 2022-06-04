@@ -4,10 +4,10 @@ from ttkbootstrap.scrolled import ScrolledFrame
 from ttkbootstrap.tooltip import ToolTip
 try:
     from . import utils
-    from .customWidgets import SearchFrame, PlaceholderEntry
+    from .customWidgets import SearchFrame
 except:
     import utils
-    from customWidgets import SearchFrame, PlaceholderEntry
+    from customWidgets import SearchFrame
 from tkinter import messagebox
 import threading
 import pandas as pd
@@ -63,15 +63,15 @@ class JobSearch:
         #### Date Posted
         ttk.Label(radio_frame, text="Date Posted").grid(row=2, column=0, sticky='nwse', pady=5)
 
-        self.date_posted = ttk.StringVar()
+        self.date_posted = ttk.IntVar(value=365) # Days since job was posted
         ttk.Radiobutton(radio_frame, text='Past 24h', variable=self.date_posted,
-                        value="DAY").grid(row=3, column=1, padx=10, pady=4, sticky='nwse')
+                        value=1).grid(row=3, column=1, padx=10, pady=4, sticky='nwse')
         ttk.Radiobutton(radio_frame, text='Past Week', variable=self.date_posted,
-                        value="WEEK").grid(row=3, column=2, padx=10, pady=4, sticky='nwse')
+                        value=7).grid(row=3, column=2, padx=10, pady=4, sticky='nwse')
         ttk.Radiobutton(radio_frame, text='Past Month', variable=self.date_posted,
-                        value="MONTH").grid(row=4, column=1, padx=10, pady=4, sticky='nwse')
+                        value=30).grid(row=4, column=1, padx=10, pady=4, sticky='nwse')
         ttk.Radiobutton(radio_frame, text='Any Time', variable=self.date_posted,
-                        value="ANY").grid(row=4, column=2, padx=10, pady=4, sticky='nwse')
+                        value=365).grid(row=4, column=2, padx=10, pady=4, sticky='nwse')
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
@@ -237,11 +237,12 @@ after which you'll only be able to get 3 results per search until the end of the
         self.table.redraw()
         self.status_str.set("Running search...")
         self.parent.update()
-        dbg = [x.lbl_name.get() for x in self.loc_frame.get_current_selection()]
+        
         try:
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
             search_result = self.linkedin_conn[0].search_jobs(
                     keywords=self.entry_keywords.get(),
+                    listed_at=24 * 3600 * self.date_posted.get(),
                     companies=[x.value for x in self.comp_frame.get_current_selection()],
                     experience=[x['name'] for x in self.exp_dict_list if x['bool_val'].get()],
                     job_type=[x['name'] for x in self.job_type_dict_list if x['bool_val'].get()],
