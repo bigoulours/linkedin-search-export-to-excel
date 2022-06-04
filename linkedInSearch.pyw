@@ -16,7 +16,7 @@ program_name = Path(__file__).stem + "-" + SW_VERSION
 
 top = ttk.Window(themename=config_dict.get('General',{}).get('theme', 'cosmo'))
 top.title(program_name)
-top.geometry("1280x720")
+top.geometry(config_dict.get('General',{}).get('resolution', '1280x720'))
 try:
     top.iconbitmap("images/linkedin.ico")
 except:
