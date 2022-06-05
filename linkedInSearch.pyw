@@ -5,6 +5,7 @@ import os
 import configparser
 from pathlib import Path
 from ui.people_search import PeopleSearch
+from ui.job_search import JobSearch
 from linkedin_api import Linkedin
 from CI.version import SW_VERSION
 
@@ -60,14 +61,17 @@ connect_btn['command'] = connect_linkedin
 
 # Tabs
 tab_control = ttk.Notebook(top)
+tab_control.pack(expand=1, fill="both")
 
+# People Search
 people_search_tab = ttk.Frame(tab_control)
 tab_control.add(people_search_tab, text='People Search')
-
-tab_control.pack(expand=1, fill="both")
-top.update()
-
 people_search_instance = PeopleSearch(people_search_tab, linkedin_conn)
+
+# Job Search
+job_search_tab = ttk.Frame(tab_control)
+tab_control.add(job_search_tab, text='Job Search')
+job_search_instance = JobSearch(job_search_tab, linkedin_conn)
 
 top.mainloop()
 

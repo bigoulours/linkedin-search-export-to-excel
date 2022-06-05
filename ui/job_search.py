@@ -1,19 +1,20 @@
+from textwrap import fill
 import ttkbootstrap as ttk
 from ttkbootstrap.scrolled import ScrolledFrame
 from ttkbootstrap.tooltip import ToolTip
 try:
     from . import utils
-    from .customWidgets import SearchFrame, PlaceholderEntry
+    from .customWidgets import SearchFrame
 except:
     import utils
-    from customWidgets import SearchFrame, PlaceholderEntry
+    from customWidgets import SearchFrame
 from tkinter import messagebox
 import threading
 import pandas as pd
 from pandastable import Table, TableModel
 
 
-class PeopleSearch:
+class JobSearch:
     def __init__(self, tk_parent, linkedin_conn):
 
         self.parent = tk_parent
@@ -34,31 +35,133 @@ class PeopleSearch:
         search_fields_frame.pack(side='top', fill='both', expand=True, padx=5)
         search_fields_frame.hide_scrollbars()
 
-        ### Connections
-        conn_frame = ttk.Frame(search_fields_frame)
-        conn_frame.pack(pady=10, side='top', fill='x')
-        conn_lbl = ttk.Label(conn_frame, text="Connections")
-        conn_lbl.pack(side='left', expand=False)
-        ToolTip(conn_lbl, text=f"Degree of Connection with the logged in user.")
-        self.first_con = ttk.BooleanVar()
-        ttk.Checkbutton(conn_frame, text="1st",
-            variable=self.first_con, bootstyle="primary").pack(side='left', padx=10)
+        ### KW-Frame
+        kw_frame = ttk.Frame(search_fields_frame)
+        kw_frame.pack(pady=5, side='top', fill="x")
+        ttk.Label(kw_frame, text="Keywords").pack(side='left')
+        self.entry_keywords = ttk.Entry(kw_frame)
+        self.entry_keywords.pack(side='left', padx=10, fill='x', expand=True)
 
-        self.second_con = ttk.BooleanVar()
-        ttk.Checkbutton(conn_frame, text="2nd",
-            variable=self.second_con, bootstyle="primary").pack(side='left', padx=10)
+        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+        
+        ### Radio Frame
+        radio_frame = ttk.Frame(search_fields_frame)
+        radio_frame.pack(side='top', fill="x", pady=5, expand=True)
+        radio_frame.grid_columnconfigure(0,weight=0)
+        radio_frame.grid_columnconfigure(1,weight=0)
+        radio_frame.grid_columnconfigure(2,weight=1)
 
-        self.third_con = ttk.BooleanVar()
-        ttk.Checkbutton(conn_frame, text="3rd+",
-            variable=self.third_con, bootstyle="primary").pack(side='left', padx=10)
+        #### Sort by
+        ttk.Label(radio_frame, text="Sort by").grid(row=0, column=0, sticky='nwse')
+
+        self.sort_by = ttk.StringVar(value="R")
+        ttk.Radiobutton(radio_frame, text='Most recent', variable=self.sort_by, value="DD").grid(row=0, column=1, padx=10, sticky='nwse')
+        ttk.Radiobutton(radio_frame, text='Most relevant', variable=self.sort_by, value="R").grid(row=0, column=2, padx=10, sticky='nwse')
+
+        ttk.Separator(radio_frame, orient='horizontal').grid(row=1, columnspan=3, pady=5, sticky='nwse')
+
+        #### Date Posted
+        ttk.Label(radio_frame, text="Date Posted").grid(row=2, column=0, sticky='nwse', pady=5)
+
+        self.date_posted = ttk.IntVar(value=365) # Days since job was posted
+        ttk.Radiobutton(radio_frame, text='Past 24h', variable=self.date_posted,
+                        value=1).grid(row=3, column=1, padx=10, pady=4, sticky='nwse')
+        ttk.Radiobutton(radio_frame, text='Past Week', variable=self.date_posted,
+                        value=7).grid(row=3, column=2, padx=10, pady=4, sticky='nwse')
+        ttk.Radiobutton(radio_frame, text='Past Month', variable=self.date_posted,
+                        value=30).grid(row=4, column=1, padx=10, pady=4, sticky='nwse')
+        ttk.Radiobutton(radio_frame, text='Any Time', variable=self.date_posted,
+                        value=365).grid(row=4, column=2, padx=10, pady=4, sticky='nwse')
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
-        ### Connection of
-        self.conn_of_frame = SearchFrame(search_fields_frame, title='Connection of', single_choice=True,
-                    fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_contact_urn_ids, x))
-        self.conn_of_frame.pack(side='top', fill="x")
+        ### Experience
+        exp_frame = ttk.Frame(search_fields_frame)
+        exp_frame.pack(side='top', fill="x")
+        exp_frame.grid_columnconfigure(0,weight=0)
+        exp_frame.grid_columnconfigure(1,weight=0)
+        exp_frame.grid_columnconfigure(2,weight=1)
+        ttk.Label(exp_frame, text="Experience").grid(row=0, column=0, pady=4, sticky='nwse')
 
+        intern_lvl_bool = ttk.BooleanVar()
+        entry_lvl_bool = ttk.BooleanVar()
+        associate_bool = ttk.BooleanVar()
+        mid_senior_bool = ttk.BooleanVar()
+        director_bool = ttk.BooleanVar()
+        executive_bool = ttk.BooleanVar()
+
+        self.exp_dict_list = [
+                {'bool_val': intern_lvl_bool, 'name': '1'},
+                {'bool_val': entry_lvl_bool, 'name': '2'},
+                {'bool_val': associate_bool, 'name': '3'},
+                {'bool_val': mid_senior_bool, 'name': '4'},
+                {'bool_val': director_bool, 'name': '5'},
+                {'bool_val': executive_bool, 'name': '6'},
+        ]
+
+        ttk.Checkbutton(exp_frame, text="Internship",
+                variable=intern_lvl_bool).grid(row=1, column=0, padx=5, pady=4, sticky='nwse')
+        ttk.Checkbutton(exp_frame, text="Entry level",
+                variable=entry_lvl_bool).grid(row=1, column=1, padx=5, pady=4, sticky='nwse')
+        ttk.Checkbutton(exp_frame, text="Associate",
+                variable=associate_bool).grid(row=1, column=2, padx=5, pady=4, sticky='nwse')
+        ttk.Checkbutton(exp_frame, text="Mid-Senior level",
+                variable=mid_senior_bool).grid(row=2, column=0, padx=5, pady=4, sticky='nwse')
+        ttk.Checkbutton(exp_frame, text="Director",
+                variable=director_bool).grid(row=2, column=1, padx=5, pady=4, sticky='nwse')
+        ttk.Checkbutton(exp_frame, text="Executive",
+                variable=executive_bool).grid(row=2, column=2, padx=5, pady=4, sticky='nwse')
+
+        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+
+        ### Company frame
+        self.comp_frame = SearchFrame(search_fields_frame, title='Company',
+                    fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_company_urn_ids, x))
+        self.comp_frame.pack(side='top', fill="x")
+
+        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+
+        ### Job Type
+        job_type_frame = ttk.Frame(search_fields_frame)
+        job_type_frame.pack(side='top', fill="x")
+        job_type_frame.grid_columnconfigure(0,weight=0)
+        job_type_frame.grid_columnconfigure(1,weight=0)
+        job_type_frame.grid_columnconfigure(2,weight=1)
+        ttk.Label(job_type_frame, text="Job Type").grid(row=0, column=0, pady=4, sticky='nwse')
+
+        full_time_bool = ttk.BooleanVar()
+        part_time_bool = ttk.BooleanVar()
+        temporary_bool = ttk.BooleanVar()
+        contract_bool = ttk.BooleanVar()
+        volunteer_bool = ttk.BooleanVar()
+        intern_type_bool = ttk.BooleanVar()
+        other_type_bool = ttk.BooleanVar()
+
+        self.job_type_dict_list = [
+                {'bool_val': full_time_bool, 'name': 'F'},
+                {'bool_val': part_time_bool, 'name': 'P'},
+                {'bool_val': temporary_bool, 'name': 'T'},
+                {'bool_val': contract_bool, 'name': 'C'},
+                {'bool_val': volunteer_bool, 'name': 'V'},
+                {'bool_val': intern_type_bool, 'name': 'I'},
+                {'bool_val': other_type_bool, 'name': 'O'},
+        ]
+
+        ttk.Checkbutton(job_type_frame, text="Other",
+                variable=other_type_bool).grid(row=0, column=2, padx=10, pady=4, sticky='nwse')
+        ttk.Checkbutton(job_type_frame, text="Full-time",
+                variable=full_time_bool).grid(row=1, column=0, padx=10, pady=4, sticky='nwse')
+        ttk.Checkbutton(job_type_frame, text="Part-time",
+                variable=part_time_bool).grid(row=1, column=1, padx=10, pady=4, sticky='nwse')
+        ttk.Checkbutton(job_type_frame, text="Temporary",
+                variable=temporary_bool).grid(row=1, column=2, padx=10, pady=4, sticky='nwse')
+        ttk.Checkbutton(job_type_frame, text="Contract",
+                variable=contract_bool).grid(row=2, column=0, padx=10, pady=4, sticky='nwse')
+        ttk.Checkbutton(job_type_frame, text="Volunteer",
+                variable=volunteer_bool).grid(row=2, column=1, padx=10, pady=4, sticky='nwse')
+        ttk.Checkbutton(job_type_frame, text="Internship",
+                variable=intern_type_bool).grid(row=2, column=2, padx=10, pady=4, sticky='nwse')
+        
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
         ### Location Frame
@@ -68,70 +171,10 @@ class PeopleSearch:
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
-        ### Current Company frame
-        self.current_comp_frame = SearchFrame(search_fields_frame, title='Current Company',
-                    fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_company_urn_ids, x))
-        self.current_comp_frame.pack(side='top', fill="x")
-
-        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
-
-        ### Past Company frame
-        self.past_comp_frame = SearchFrame(search_fields_frame, title='Past Company',
-                    fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_company_urn_ids, x))
-        self.past_comp_frame.pack(side='top', fill="x", pady=5)
-
-        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
-
-        ### School frame
-        self.school_frame = SearchFrame(search_fields_frame, title='School',
-                    fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_school_urn_ids, x))
-        self.school_frame.pack(side='top', fill="x", pady=5)
-
-        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
-
         ### Industry frame
         self.industry_frame = SearchFrame(search_fields_frame, title='Industry',
                     fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_industry_urn_ids, x))
         self.industry_frame.pack(side='top', fill="x", pady=5)
-
-        ### KW-Header
-        kw_header_frame = ttk.Frame(search_fields_frame)
-        kw_header_frame.pack(pady=5, side='top', fill="x")
-        ttk.Label(kw_header_frame, text="Keywords").pack(side='left')
-        ttk.Separator(kw_header_frame, orient='horizontal').pack(side='left', fill='x', expand=True)
-
-        ### KW-Frame
-        kw_frame = ttk.Frame(search_fields_frame)
-        kw_frame.pack(pady=5, side='top', fill="x")
-        kw_frame.grid_columnconfigure(0,weight=1)
-        kw_frame.grid_columnconfigure(1,weight=1)
-        kw_frame.grid_rowconfigure(0,weight=1)
-        kw_frame.grid_rowconfigure(1,weight=1)
-        kw_frame.grid_rowconfigure(2,weight=1)
-
-        #### General
-        self.entry_keywords = PlaceholderEntry(kw_frame, 'General')
-        self.entry_keywords.grid(row=0, column=0, sticky='nwse', padx=5, pady=4)
-
-        #### First Name
-        self.entry_keywords_first_name = PlaceholderEntry(kw_frame, 'First Name')
-        self.entry_keywords_first_name.grid(row=0, column=1, sticky='nwse', padx=5, pady=4)
-
-        #### Last Name
-        self.entry_keywords_last_name = PlaceholderEntry(kw_frame, 'Last Name')
-        self.entry_keywords_last_name.grid(row=1, column=0, sticky='nwse', padx=5, pady=4)
-
-        #### Title
-        self.entry_keywords_title = PlaceholderEntry(kw_frame, 'Title')
-        self.entry_keywords_title.grid(row=1, column=1, sticky='nwse', padx=5, pady=4)
-
-        #### Company
-        self.entry_keywords_company = PlaceholderEntry(kw_frame, 'Company')
-        self.entry_keywords_company.grid(row=2, column=0, sticky='nwse', padx=5, pady=4)
-
-        #### School
-        self.entry_keywords_school = PlaceholderEntry(kw_frame, 'School')
-        self.entry_keywords_school.grid(row=2, column=1, sticky='nwse', padx=5, pady=4)
 
         self.search_paned_window.add(search_fields_canvas)
 
@@ -170,12 +213,6 @@ class PeopleSearch:
             \nDepending on the number of results and search frequency, this can trigger the linkedin limit \
 after which you'll only be able to get 3 results per search until the end of the month.")
 
-        self.get_skills = ttk.BooleanVar()
-        skills_chk_btn= ttk.Checkbutton(btn_sub_frame, text="Fetch skills",
-                                variable=self.get_skills, bootstyle="danger")
-        skills_chk_btn.pack(side='left', padx=10)
-        ToolTip(skills_chk_btn, text=f"Fetch skills by running one additional request per result.")
-
         self.get_contact_info = ttk.BooleanVar()
         contact_info_chk_btn = ttk.Checkbutton(btn_sub_frame, text="Fetch contact info",
                                     variable=self.get_contact_info, bootstyle="danger")
@@ -200,33 +237,18 @@ after which you'll only be able to get 3 results per search until the end of the
         self.table.redraw()
         self.status_str.set("Running search...")
         self.parent.update()
-        network_depths = []
-        if self.first_con.get():
-            network_depths.append('F')
-        if self.second_con.get():
-            network_depths.append('S')
-        if self.third_con.get():
-            network_depths.append('O')
-        if self.conn_of_frame.get_current_selection():
-            connection_of = self.conn_of_frame.get_current_selection()[0].value
-        else:
-            connection_of = None
+        
         try:
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
-            search_result = self.linkedin_conn[0].search_people(
-                    network_depths=network_depths,
-                    connection_of=connection_of,
-                    regions=[x.value for x in self.loc_frame.get_current_selection()],
-                    current_company=[x.value for x in self.current_comp_frame.get_current_selection()],
-                    past_companies=[x.value for x in self.past_comp_frame.get_current_selection()],
-                    schools=[x.value for x in self.school_frame.get_current_selection()],
-                    industries=[x.value for x in self.industry_frame.get_current_selection()],
+            search_result = self.linkedin_conn[0].search_jobs(
                     keywords=self.entry_keywords.get(),
-                    keyword_first_name=self.entry_keywords_first_name.get(),
-                    keyword_last_name=self.entry_keywords_last_name.get(),
-                    keyword_title=self.entry_keywords_title.get(),
-                    keyword_company=self.entry_keywords_company.get(),
-                    keyword_school=self.entry_keywords_school.get(),
+                    sort_by=self.sort_by.get(),
+                    listed_at=24 * 3600 * self.date_posted.get(),
+                    companies=[x.value for x in self.comp_frame.get_current_selection()],
+                    experience=[x['name'] for x in self.exp_dict_list if x['bool_val'].get()],
+                    job_type=[x['name'] for x in self.job_type_dict_list if x['bool_val'].get()],
+                    industries=[x.value for x in self.industry_frame.get_current_selection()],
+                    location_name=[x.lbl_name.get() for x in self.loc_frame.get_current_selection()],
                 )
 
             if self.quick_search:
@@ -236,7 +258,7 @@ after which you'll only be able to get 3 results per search until the end of the
 
             else:
                 result_size = len(search_result)
-                self.status_str.set("Found " + str(result_size) + " results! Searching contact details... This can take a while...")
+                self.status_str.set("Found " + str(result_size) + " results! Searching jobs details... This can take a while...")
                 self.parent.update()
 
                 if result_size > 999:
@@ -250,36 +272,32 @@ after which you'll only be able to get 3 results per search until the end of the
 
                 row = 1
 
-                for people in search_result:
-                    profile = self.linkedin_conn[0].get_profile(urn_id=people['urn_id'])
-                    if profile != {}:
-                        if 'geoLocationName' in profile.keys():
-                            geolocation = profile['geoLocationName']
-                        else:
-                            geolocation = ""
+                for job in search_result:
+                    job_obj = self.linkedin_conn[0].get_job(job['dashEntityUrn'].rsplit(':',1)[1])
+                    if job_obj != {}:
 
-                        profile_dict = {
-                            'First Name': [profile['firstName']],
-                            'Last Name': [profile['lastName']],
-                            'Title': [profile['experience'][0]['title']],
-                            'Company': [profile['experience'][0]['companyName']],
-                            'Location': [geolocation],
-                            'Headline': [profile['headline']],
-                            'Profile Link': ['https://www.linkedin.com/in/' + profile['profile_id']]
+                        job_dict = {
+                            'Title': [job_obj['title']],
+                            'Company': [job_obj['companyDetails']
+                                             .get('com.linkedin.voyager.deco.jobs.web.shared.WebCompactJobPostingCompany', {},
+                                            ).get('companyResolutionResult', {}
+                                            ).get('name', '')],
+                            'Location': [job_obj['formattedLocation']],
+                            'Description': [job_obj.get('description', {}).get('text', '')],
+                            'Remote': [job_obj['workRemoteAllowed']],
+                            'LinkedIn Link': [f"https://www.linkedin.com/jobs/view/{job_obj['jobPostingId']}"],
+                            'Direct Link': [job_obj.get('applyMethod',{})
+                                                 .get('com.linkedin.voyager.jobs.OffsiteApply', {}
+                                                ).get('companyApplyUrl', '')]
                         }
 
-                        if self.get_skills.get():
-                            skills_raw = self.linkedin_conn[0].get_profile_skills(urn_id=people['urn_id'])
-                            skills = [dic['name'] for dic in skills_raw]
-                            profile_dict.update({'Skills': [skills]})
-
-                        if self.get_contact_info.get():
-                            contact_info = self.linkedin_conn[0].get_profile_contact_info(urn_id=people['urn_id'])
-                            contact_info = {k: [v] for k,v in contact_info.items()}
-                            profile_dict.update(contact_info)
+                        # if self.get_contact_info.get():
+                        #     contact_info = self.linkedin_conn[0].get_profile_contact_info(urn_id=job['urn_id'])
+                        #     contact_info = {k: [v] for k,v in contact_info.items()}
+                        #     job_dict.update(contact_info)
                         
                         self.search_results_df = pd.concat([self.search_results_df,
-                                                    pd.DataFrame(profile_dict)])
+                                                    pd.DataFrame(job_dict)])
 
                         self.table.updateModel(TableModel(self.search_results_df))
                         self.table.redraw()
@@ -332,7 +350,7 @@ if __name__ == "__main__":
     from linkedin_api import Linkedin
 
     root = ttk.Window()
-    root.title("LinkedIn People Search")
+    root.title("LinkedIn Job Search")
     root.geometry("1280x720")
 
     # Login frame
@@ -366,5 +384,5 @@ if __name__ == "__main__":
 
     connect_btn['command'] = connect_linkedin
 
-    people_search = PeopleSearch(root, linkedin_conn)
+    people_search = JobSearch(root, linkedin_conn)
     root.mainloop()
