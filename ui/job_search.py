@@ -257,7 +257,7 @@ after which you'll only be able to get 3 results per search until the end of the
 
             else:
                 result_size = len(search_result)
-                self.status_str.set("Found " + str(result_size) + " results! Searching contact details... This can take a while...")
+                self.status_str.set("Found " + str(result_size) + " results! Searching jobs details... This can take a while...")
                 self.parent.update()
 
                 if result_size > 999:
@@ -272,35 +272,31 @@ after which you'll only be able to get 3 results per search until the end of the
                 row = 1
 
                 for job in search_result:
-                    profile = self.linkedin_conn[0].get_profile(urn_id=job['urn_id'])
-                    if profile != {}:
-                        if 'geoLocationName' in profile.keys():
-                            geolocation = profile['geoLocationName']
-                        else:
-                            geolocation = ""
+                    job_obj = self.linkedin_conn[0].get_job(job['dashEntityUrn'].rsplit(':',1)[1])
+                    if job_obj != {}:
 
-                        profile_dict = {
-                            'First Name': [profile['firstName']],
-                            'Last Name': [profile['lastName']],
-                            'Title': [profile['experience'][0]['title']],
-                            'Company': [profile['experience'][0]['companyName']],
-                            'Location': [geolocation],
-                            'Headline': [profile['headline']],
-                            'Profile Link': ['https://www.linkedin.com/in/' + profile['profile_id']]
+                        job_dict = {
+                            'Title': [job_obj['title']],
+                            'Company': [job_obj['companyDetails']
+                                             .get('com.linkedin.voyager.deco.jobs.web.shared.WebCompactJobPostingCompany', {},
+                                            ).get('companyResolutionResult', {}
+                                            ).get('name', '')],
+                            'Location': [job_obj['formattedLocation']],
+                            'Description': [job_obj.get('description', {}).get('text', '')],
+                            'Remote': [job_obj['workRemoteAllowed']],
+                            'LinkedIn Link': [f"https://www.linkedin.com/jobs/view/{job_obj['jobPostingId']}"],
+                            'Direct Link': [job_obj.get('applyMethod',{})
+                                                 .get('com.linkedin.voyager.jobs.OffsiteApply', {}
+                                                ).get('companyApplyUrl', '')]
                         }
 
-                        if self.get_skills.get():
-                            skills_raw = self.linkedin_conn[0].get_profile_skills(urn_id=job['urn_id'])
-                            skills = [dic['name'] for dic in skills_raw]
-                            profile_dict.update({'Skills': [skills]})
-
-                        if self.get_contact_info.get():
-                            contact_info = self.linkedin_conn[0].get_profile_contact_info(urn_id=job['urn_id'])
-                            contact_info = {k: [v] for k,v in contact_info.items()}
-                            profile_dict.update(contact_info)
+                        # if self.get_contact_info.get():
+                        #     contact_info = self.linkedin_conn[0].get_profile_contact_info(urn_id=job['urn_id'])
+                        #     contact_info = {k: [v] for k,v in contact_info.items()}
+                        #     job_dict.update(contact_info)
                         
                         self.search_results_df = pd.concat([self.search_results_df,
-                                                    pd.DataFrame(profile_dict)])
+                                                    pd.DataFrame(job_dict)])
 
                         self.table.updateModel(TableModel(self.search_results_df))
                         self.table.redraw()
