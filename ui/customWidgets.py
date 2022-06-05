@@ -135,7 +135,8 @@ class SearchFrame(ttk.Frame):
             vbar=True
         self.labels_text_box = ScrolledText(second_row, wrap="word", height=0, autohide=True, vbar=vbar)
         self.labels_text_box.pack(side='top', fill='x', padx=5, expand=True)
-        self.labels_text_box._text.configure(state="disabled", highlightthickness = 0, borderwidth=0)
+        self.labels_text_box._text.configure(state="disabled", highlightthickness = 0,
+                                                borderwidth=0, bg=ttk.Style().colors.bg)
         self.labels_text_box.bind( "<Configure>", self.resize_text_box)
 
         self.entry.set_selection_text(self, self.labels_text_box)
