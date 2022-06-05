@@ -18,10 +18,18 @@ program_name = Path(__file__).stem + "-" + SW_VERSION
 top = ttk.Window(themename=config_dict.get('General',{}).get('theme', 'cosmo'))
 top.title(program_name)
 top.geometry(config_dict.get('General',{}).get('resolution', '1280x720'))
+
 try:
     top.iconbitmap("images/linkedin.ico")
 except:
-    print("LinkedIn icon not found. Using default.")
+    print("LinkedIn icon (.ico) not found. Using default.")
+finally:
+    try:
+        img = ttk.PhotoImage(file="images/linkedin.png")
+        top.wm_iconphoto(True, img)
+    except:
+        print("LinkedIn icon (.png) not found. Using default.")
+
 this_file_name = os.path.splitext(os.path.basename(__file__))[0]
 
 # Login frame
