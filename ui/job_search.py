@@ -2,6 +2,7 @@ from textwrap import fill
 import ttkbootstrap as ttk
 from ttkbootstrap.scrolled import ScrolledFrame
 from ttkbootstrap.tooltip import ToolTip
+from ttkbootstrap.tableview import Tableview
 try:
     from . import utils
     from .customWidgets import SearchFrame
@@ -183,11 +184,15 @@ class JobSearch:
         # pandastable
         self.table_frame = ttk.Frame(self.table_main_frame, bootstyle="secondary", borderwidth=2)
         self.table_frame.pack(side="top", fill="both", expand=True)
-        self.table = Table(self.table_frame, dataframe=pd.DataFrame(), showtoolbar=False, showstatusbar=True)
-        utils.fit_table_style_to_theme(self.table, ttk.Style())
-        self.table.unbind_all("<Tab>")
-        self.table.unbind_all("<Return>")
-        self.table.show()
+
+        self.table = Tableview(self.table_frame, autofit=True)
+        self.table.pack(fill='both', expand=True, padx=1, pady=1)
+
+        # self.table = Table(self.table_frame, dataframe=pd.DataFrame(), showtoolbar=False, showstatusbar=True)
+        # utils.fit_table_style_to_theme(self.table, ttk.Style())
+        # self.table.unbind_all("<Tab>")
+        # self.table.unbind_all("<Return>")
+        # self.table.show()
 
         self.search_paned_window.add(self.table_main_frame)
 
@@ -233,8 +238,7 @@ after which you'll only be able to get 3 results per search until the end of the
 
     def run_search(self):
         self.search_results_df = pd.DataFrame()
-        self.table.updateModel(TableModel(self.search_results_df))
-        self.table.redraw()
+        self.table.build_table_data([], [])
         self.status_str.set("Running search...")
         self.parent.update()
         
@@ -253,8 +257,7 @@ after which you'll only be able to get 3 results per search until the end of the
 
             if self.quick_search:
                 self.search_results_df = pd.DataFrame(search_result)
-                self.table.updateModel(TableModel(self.search_results_df))
-                self.table.redraw()
+                self.table.build_table_data(self.search_results_df.columns, self.search_results_df.values.tolist())
 
             else:
                 result_size = len(search_result)
@@ -277,30 +280,31 @@ after which you'll only be able to get 3 results per search until the end of the
                     if job_obj != {}:
 
                         job_dict = {
-                            'Title': [job_obj['title']],
-                            'Company': [job_obj['companyDetails']
+                            'Title': job_obj['title'],
+                            'Company': job_obj['companyDetails']
                                              .get('com.linkedin.voyager.deco.jobs.web.shared.WebCompactJobPostingCompany', {},
                                             ).get('companyResolutionResult', {}
-                                            ).get('name', '')],
-                            'Location': [job_obj['formattedLocation']],
-                            'Description': [job_obj.get('description', {}).get('text', '')],
-                            'Remote': [job_obj['workRemoteAllowed']],
-                            'LinkedIn Link': [f"https://www.linkedin.com/jobs/view/{job_obj['jobPostingId']}"],
-                            'Direct Link': [job_obj.get('applyMethod',{})
+                                            ).get('name', ''),
+                            'Location': job_obj['formattedLocation'],
+                            'Description': job_obj.get('description', {}).get('text', ''),
+                            'Remote': job_obj['workRemoteAllowed'],
+                            'LinkedIn Link': f"https://www.linkedin.com/jobs/view/{job_obj['jobPostingId']}",
+                            'Direct Link': job_obj.get('applyMethod',{})
                                                  .get('com.linkedin.voyager.jobs.OffsiteApply', {}
-                                                ).get('companyApplyUrl', '')]
+                                                ).get('companyApplyUrl', '').split('?', 1)[0]
                         }
 
-                        # if self.get_contact_info.get():
-                        #     contact_info = self.linkedin_conn[0].get_profile_contact_info(urn_id=job['urn_id'])
-                        #     contact_info = {k: [v] for k,v in contact_info.items()}
-                        #     job_dict.update(contact_info)
+                        if self.search_results_df.empty:
+                            self.table.build_table_data(job_dict.keys(), [])
+                        
+                        self.table.insert_row('end', list(job_dict.values()))
+                        for i in range(len(job_dict)):
+                            self.table.view.column(f'#{i}', stretch=True)
+                        self.table.load_table_data()
                         
                         self.search_results_df = pd.concat([self.search_results_df,
-                                                    pd.DataFrame(job_dict)])
+                                                    pd.DataFrame([job_dict.values()], columns=job_dict.keys())])
 
-                        self.table.updateModel(TableModel(self.search_results_df))
-                        self.table.redraw()
                         self.status_str.set("Scanned " + str(row) + " out of " + str(result_size) + " profiles")
                         self.parent.update()
 
