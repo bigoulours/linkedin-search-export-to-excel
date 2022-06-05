@@ -96,6 +96,7 @@ class AutocompleteCombobox(ttk.Combobox):
             except:
                 messagebox.showinfo("Warning", 
                     "Could not fetch dropdown content. Check your connection or log into the corresponding service.")
+                return
             if isinstance(fct_res, list):
                 self['values'] = fct_res
             elif isinstance(fct_res, dict):
