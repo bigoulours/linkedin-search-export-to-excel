@@ -26,7 +26,7 @@ def fit_table_style_to_theme(pdtable: Table, theme_style: Style):
     pdtable.__dict__.update({'cellbackgr':colors.bg,'grid_color':colors.secondary, 'textcolor':colors.inputfg,
                  'rowselectedcolor':colors.secondary, 'colselectedcolor':colors.selectbg})
 
-def save_dataframe_to_file(dataframe, keep_index=True, json_orient="records"):
+def save_dataframe_to_file(dataframe, keep_index=False, json_orient="records"):
     COLUMN_MAX_LENGTH = 200
     chosen_file = filedialog.asksaveasfile(mode='w', filetypes=[("Excel", ".xlsx"), ("HTML", ".html"),
                                                                 ("CSV", ".csv"), ("JSON", ".json")], defaultextension=".xlsx")

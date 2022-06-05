@@ -277,18 +277,18 @@ after which you'll only be able to get 3 results per search until the end of the
                     if job_obj != {}:
 
                         job_dict = {
-                            'Title': [job_obj['title']],
-                            'Company': [job_obj['companyDetails']
+                            'Title': job_obj['title'],
+                            'Company': job_obj['companyDetails']
                                              .get('com.linkedin.voyager.deco.jobs.web.shared.WebCompactJobPostingCompany', {},
                                             ).get('companyResolutionResult', {}
-                                            ).get('name', '')],
-                            'Location': [job_obj['formattedLocation']],
-                            'Description': [job_obj.get('description', {}).get('text', '')],
-                            'Remote': [job_obj['workRemoteAllowed']],
-                            'LinkedIn Link': [f"https://www.linkedin.com/jobs/view/{job_obj['jobPostingId']}"],
-                            'Direct Link': [job_obj.get('applyMethod',{})
+                                            ).get('name', ''),
+                            'Location': job_obj['formattedLocation'],
+                            'Description': job_obj.get('description', {}).get('text', ''),
+                            'Remote': job_obj['workRemoteAllowed'],
+                            'LinkedIn Link': f"https://www.linkedin.com/jobs/view/{job_obj['jobPostingId']}",
+                            'Direct Link': job_obj.get('applyMethod',{})
                                                  .get('com.linkedin.voyager.jobs.OffsiteApply', {}
-                                                ).get('companyApplyUrl', '')]
+                                                ).get('companyApplyUrl', '').split('?', 1)[0]
                         }
 
                         # if self.get_contact_info.get():
@@ -297,7 +297,7 @@ after which you'll only be able to get 3 results per search until the end of the
                         #     job_dict.update(contact_info)
                         
                         self.search_results_df = pd.concat([self.search_results_df,
-                                                    pd.DataFrame(job_dict)])
+                                                pd.DataFrame([job_dict.values()], columns=job_dict.keys())])
 
                         self.table.updateModel(TableModel(self.search_results_df))
                         self.table.redraw()
