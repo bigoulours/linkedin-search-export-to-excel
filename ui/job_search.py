@@ -54,9 +54,9 @@ class JobSearch:
         #### Sort by
         ttk.Label(radio_frame, text="Sort by").grid(row=0, column=0, sticky='nwse')
 
-        self.sort_by = ttk.StringVar()
-        ttk.Radiobutton(radio_frame, text='Most recent', variable=self.sort_by, value="RECENT").grid(row=0, column=1, padx=10, sticky='nwse')
-        ttk.Radiobutton(radio_frame, text='Most relevant', variable=self.sort_by, value="RELEVANT").grid(row=0, column=2, padx=10, sticky='nwse')
+        self.sort_by = ttk.StringVar(value="R")
+        ttk.Radiobutton(radio_frame, text='Most recent', variable=self.sort_by, value="DD").grid(row=0, column=1, padx=10, sticky='nwse')
+        ttk.Radiobutton(radio_frame, text='Most relevant', variable=self.sort_by, value="R").grid(row=0, column=2, padx=10, sticky='nwse')
 
         ttk.Separator(radio_frame, orient='horizontal').grid(row=1, columnspan=3, pady=5, sticky='nwse')
 
@@ -242,6 +242,7 @@ after which you'll only be able to get 3 results per search until the end of the
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
             search_result = self.linkedin_conn[0].search_jobs(
                     keywords=self.entry_keywords.get(),
+                    sort_by=self.sort_by.get(),
                     listed_at=24 * 3600 * self.date_posted.get(),
                     companies=[x.value for x in self.comp_frame.get_current_selection()],
                     experience=[x['name'] for x in self.exp_dict_list if x['bool_val'].get()],
