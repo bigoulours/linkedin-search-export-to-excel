@@ -1,6 +1,7 @@
 import ttkbootstrap as ttk
 from ttkbootstrap.scrolled import ScrolledText
 from ttkbootstrap.tooltip import ToolTip
+from tkinter import messagebox
 
 PADDING = 1
 
@@ -90,7 +91,11 @@ class AutocompleteCombobox(ttk.Combobox):
     def autocomplete_fetch(self):
         """fetch dropdown content"""
         if self.string_var.get():
-            fct_res = self.fetch_fct(self.string_var.get())
+            try:
+                fct_res = self.fetch_fct(self.string_var.get())
+            except:
+                messagebox.showinfo("Warning", 
+                    "Could not fetch dropdown content. Check your connection or log into the corresponding service.")
             if isinstance(fct_res, list):
                 self['values'] = fct_res
             elif isinstance(fct_res, dict):
