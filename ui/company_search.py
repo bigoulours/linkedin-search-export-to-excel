@@ -34,6 +34,15 @@ class CompanySearch:
         search_fields_frame.pack(side='top', fill='both', expand=True, padx=5)
         search_fields_frame.hide_scrollbars()
 
+        ### KW-Frame
+        kw_frame = ttk.Frame(search_fields_frame)
+        kw_frame.pack(pady=5, side='top', fill="x")
+        ttk.Label(kw_frame, text="Keywords").pack(side='left')
+        self.entry_keywords = ttk.Entry(kw_frame)
+        self.entry_keywords.pack(side='left', padx=10, fill='x', expand=True)
+
+        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+
         ### Location Frame
         self.loc_frame = SearchFrame(search_fields_frame, title='Location',
                     fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_geo_urn_ids, x))
@@ -102,33 +111,12 @@ after which you'll only be able to get 3 results per search until the end of the
         self.table.redraw()
         self.status_str.set("Running search...")
         self.parent.update()
-        network_depths = []
-        if self.first_con.get():
-            network_depths.append('F')
-        if self.second_con.get():
-            network_depths.append('S')
-        if self.third_con.get():
-            network_depths.append('O')
-        if self.conn_of_frame.get_current_selection():
-            connection_of = self.conn_of_frame.get_current_selection()[0].value
-        else:
-            connection_of = None
         try:
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
-            search_result = self.linkedin_conn[0].search_people(
-                    network_depths=network_depths,
-                    connection_of=connection_of,
-                    regions=[x.value for x in self.loc_frame.get_current_selection()],
-                    current_company=[x.value for x in self.current_comp_frame.get_current_selection()],
-                    past_companies=[x.value for x in self.past_comp_frame.get_current_selection()],
-                    schools=[x.value for x in self.school_frame.get_current_selection()],
-                    industries=[x.value for x in self.industry_frame.get_current_selection()],
+            search_result = self.linkedin_conn[0].search_companies(
                     keywords=self.entry_keywords.get(),
-                    keyword_first_name=self.entry_keywords_first_name.get(),
-                    keyword_last_name=self.entry_keywords_last_name.get(),
-                    keyword_title=self.entry_keywords_title.get(),
-                    keyword_company=self.entry_keywords_company.get(),
-                    keyword_school=self.entry_keywords_school.get(),
+                    regions=[x.value for x in self.loc_frame.get_current_selection()],
+                    industries=[x.value for x in self.industry_frame.get_current_selection()],
                 )
 
             if self.quick_search:
