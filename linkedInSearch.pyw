@@ -6,6 +6,7 @@ import configparser
 from pathlib import Path
 from ui.people_search import PeopleSearch
 from ui.job_search import JobSearch
+from ui.company_search import CompanySearch
 from linkedin_api import Linkedin
 from CI.version import SW_VERSION
 
@@ -80,6 +81,11 @@ people_search_instance = PeopleSearch(people_search_tab, linkedin_conn)
 job_search_tab = ttk.Frame(tab_control)
 tab_control.add(job_search_tab, text='Job Search')
 job_search_instance = JobSearch(job_search_tab, linkedin_conn)
+
+# Company Search
+company_search_tab = ttk.Frame(tab_control)
+tab_control.add(company_search_tab, text='Company Search')
+company_search_instance = CompanySearch(company_search_tab, linkedin_conn)
 
 top.mainloop()
 
