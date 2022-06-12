@@ -40,17 +40,23 @@ class PeopleSearch:
         conn_lbl = ttk.Label(conn_frame, text="Connections")
         conn_lbl.pack(side='left', expand=False)
         ToolTip(conn_lbl, text=f"Degree of Connection with the logged in user.")
-        self.first_con = ttk.BooleanVar()
+
+        first_con = ttk.BooleanVar()
+        second_con = ttk.BooleanVar()
+        third_con = ttk.BooleanVar()
+
+        self.con_dict_list = [
+                {'bool_val': first_con, 'name': 'F'},
+                {'bool_val': second_con, 'name': 'S'},
+                {'bool_val': third_con, 'name': 'O'}
+        ]
+
         ttk.Checkbutton(conn_frame, text="1st",
-            variable=self.first_con, bootstyle="primary").pack(side='left', padx=10)
-
-        self.second_con = ttk.BooleanVar()
+            variable=first_con, bootstyle="primary").pack(side='left', padx=10)
         ttk.Checkbutton(conn_frame, text="2nd",
-            variable=self.second_con, bootstyle="primary").pack(side='left', padx=10)
-
-        self.third_con = ttk.BooleanVar()
+            variable=second_con, bootstyle="primary").pack(side='left', padx=10)
         ttk.Checkbutton(conn_frame, text="3rd+",
-            variable=self.third_con, bootstyle="primary").pack(side='left', padx=10)
+            variable=third_con, bootstyle="primary").pack(side='left', padx=10)
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
@@ -200,22 +206,11 @@ after which you'll only be able to get 3 results per search until the end of the
         self.table.redraw()
         self.status_str.set("Running search...")
         self.parent.update()
-        network_depths = []
-        if self.first_con.get():
-            network_depths.append('F')
-        if self.second_con.get():
-            network_depths.append('S')
-        if self.third_con.get():
-            network_depths.append('O')
-        if self.conn_of_frame.get_current_selection():
-            connection_of = self.conn_of_frame.get_current_selection()[0].value
-        else:
-            connection_of = None
         try:
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
             search_result = self.linkedin_conn[0].search_people(
-                    network_depths=network_depths,
-                    connection_of=connection_of,
+                    network_depths=[x['name'] for x in self.con_dict_list if x['bool_val'].get()],
+                    connection_of=next((x.value for x in self.conn_of_frame.get_current_selection()), None),
                     regions=[x.value for x in self.loc_frame.get_current_selection()],
                     current_company=[x.value for x in self.current_comp_frame.get_current_selection()],
                     past_companies=[x.value for x in self.past_comp_frame.get_current_selection()],
