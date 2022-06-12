@@ -79,7 +79,7 @@ class AutocompleteCombobox(ttk.Combobox):
             pass
         else:
             rm_lbl = RemovableLabel(self.parent, self.string_var.get(), 
-                                    value=self._completion_dict.get(self.string_var.get(), None))
+                                    value=self._completion_dict.get(self.string_var.get()))
             if curr_sel and self.single_choice:
                 curr_sel[0].lbl_name.set(rm_lbl.lbl_name.get())
                 curr_sel[0].value = rm_lbl.value
@@ -145,6 +145,12 @@ class SearchFrame(ttk.Frame):
         return [self.nametowidget(x[1])
                 for x in self.labels_text_box.dump('1.0', 'end-1c', window=True)
                 if x[1]]
+
+    def clear(self):
+        self.entry.string_var.set('')
+        for lbl in self.labels_text_box.dump("1.0", "end", window=True)[::-1]:
+            self.nametowidget(lbl[1]).destroy()
+            self.labels_text_box.delete(lbl[2])
 
     def resize_text_box(self, *args):
         # cleaning old labels:

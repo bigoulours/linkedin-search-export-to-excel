@@ -6,10 +6,10 @@ from ttkbootstrap.tooltip import ToolTip
 from tkinter import filedialog
 try:
     from . import utils
-    from .customWidgets import SearchFrame
+    from .customWidgets import *
 except:
     import utils
-    from customWidgets import SearchFrame
+    from customWidgets import *
 from tkinter import messagebox
 import threading
 import pandas as pd
@@ -254,11 +254,11 @@ after which you'll only be able to get 3 results per search until the end of the
                 'keywords': self.entry_keywords.get(),
                 'sort_by' : self.sort_by.get(),
                 'listed_at' : 24 * 3600 * self.date_posted.get(),
-                'companies' : {x.lbl_name.get(): x.value for x in self.comp_frame.get_current_selection()},
                 'experience' : [x['name'] for x in self.exp_dict_list if x['bool_val'].get()],
+                'companies' : [[x.lbl_name.get(), x.value] for x in self.comp_frame.get_current_selection()],
                 'job_type' : [x['name'] for x in self.job_type_dict_list if x['bool_val'].get()],
-                'industries' : {x.lbl_name.get(): x.value for x in self.industry_frame.get_current_selection()},
-                'location' : {x.lbl_name.get(): x.value for x in self.loc_frame.get_current_selection()}
+                'location' : [[x.lbl_name.get(), x.value] for x in self.loc_frame.get_current_selection()],
+                'industries' : [[x.lbl_name.get(), x.value] for x in self.industry_frame.get_current_selection()]
             }
         }
         with open(chosen_file.name, 'w') as f:
@@ -282,6 +282,35 @@ after which you'll only be able to get 3 results per search until the end of the
         self.sort_by.set(config['sort_by'])
         self.date_posted.set(config['listed_at']//(24 * 3600))
 
+        for bool_var in self.exp_dict_list:
+            if bool_var['name'] in config['experience']:
+                bool_var['bool_val'].set(True)
+            else:
+                bool_var['bool_val'].set(False)
+
+        self.comp_frame.clear()
+        for comp in config['companies']:
+            rm_lbl = RemovableLabel(self.comp_frame, comp[0], value=comp[1])
+            self.comp_frame.entry.scrolled_text.window_create("insert", window=rm_lbl, padx=3, pady=2)
+        self.comp_frame.resize_text_box()
+
+        for bool_var in self.job_type_dict_list:
+            if bool_var['name'] in config['job_type']:
+                bool_var['bool_val'].set(True)
+            else:
+                bool_var['bool_val'].set(False)
+
+        self.loc_frame.clear()
+        for loc in config['location']:
+            rm_lbl = RemovableLabel(self.loc_frame, loc[0], value=loc[1])
+            self.loc_frame.entry.scrolled_text.window_create("insert", window=rm_lbl, padx=3, pady=2)
+        self.loc_frame.resize_text_box()
+
+        self.industry_frame.clear()
+        for ind in config['industries']:
+            rm_lbl = RemovableLabel(self.industry_frame, ind[0], value=ind[1])
+            self.industry_frame.entry.scrolled_text.window_create("insert", window=rm_lbl, padx=3, pady=2)
+        self.industry_frame.resize_text_box()
 
         self.status_str.set(f"Config loaded succesfully!")        
 
