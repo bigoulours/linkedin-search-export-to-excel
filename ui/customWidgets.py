@@ -146,6 +146,13 @@ class SearchFrame(ttk.Frame):
                 for x in self.labels_text_box.dump('1.0', 'end-1c', window=True)
                 if x[1]]
 
+    def load_name_val_from_list(self, value_list):
+        self.clear()
+        for name, val in value_list:
+            rm_lbl = RemovableLabel(self, name, value=val)
+            self.entry.scrolled_text.window_create("insert", window=rm_lbl, padx=3, pady=2)
+        self.resize_text_box()
+
     def clear(self):
         self.entry.string_var.set('')
         for lbl in self.labels_text_box.dump("1.0", "end", window=True)[::-1]:
