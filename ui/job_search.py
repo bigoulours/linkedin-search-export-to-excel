@@ -227,11 +227,11 @@ class JobSearch:
             \nDepending on the number of results and search frequency, this can trigger the linkedin limit \
 after which you'll only be able to get 3 results per search until the end of the month.")
 
-        self.get_contact_info = ttk.BooleanVar()
-        contact_info_chk_btn = ttk.Checkbutton(btn_sub_frame, text="Fetch contact info",
-                                    variable=self.get_contact_info, bootstyle="danger")
-        contact_info_chk_btn.pack(side='left', padx=10)
-        ToolTip(contact_info_chk_btn, text=f"Fetch contact info by running one additional request per result.")
+        # self.get_contact_info = ttk.BooleanVar()
+        # contact_info_chk_btn = ttk.Checkbutton(btn_sub_frame, text="Fetch contact info",
+        #                             variable=self.get_contact_info, bootstyle="danger")
+        # contact_info_chk_btn.pack(side='left', padx=10)
+        # ToolTip(contact_info_chk_btn, text=f"Fetch contact info by running one additional request per result.")
 
         self.export_to_file_btn = ttk.Button(btn_frame, text="Export to File", state="disabled")
         self.export_to_file_btn.pack(side='left', padx=10)
