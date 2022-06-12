@@ -205,3 +205,8 @@ class PlaceholderEntry(ttk.Entry):
             return ''
         else:
             return super().get()
+
+    def replace_text(self, text):
+        self.delete(0,'end')
+        self['foreground'] = self.default_fg_color
+        self.insert(0, text)
