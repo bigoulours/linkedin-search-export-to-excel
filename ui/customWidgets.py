@@ -79,7 +79,7 @@ class AutocompleteCombobox(ttk.Combobox):
             pass
         else:
             rm_lbl = RemovableLabel(self.parent, self.string_var.get(), 
-                                    value=self._completion_dict.get(self.string_var.get(), None))
+                                    value=self._completion_dict.get(self.string_var.get()))
             if curr_sel and self.single_choice:
                 curr_sel[0].lbl_name.set(rm_lbl.lbl_name.get())
                 curr_sel[0].value = rm_lbl.value
@@ -146,6 +146,19 @@ class SearchFrame(ttk.Frame):
                 for x in self.labels_text_box.dump('1.0', 'end-1c', window=True)
                 if x[1]]
 
+    def load_name_val_from_list(self, value_list):
+        self.clear()
+        for name, val in value_list:
+            rm_lbl = RemovableLabel(self, name, value=val)
+            self.entry.scrolled_text.window_create("insert", window=rm_lbl, padx=3, pady=2)
+        self.resize_text_box()
+
+    def clear(self):
+        self.entry.string_var.set('')
+        for lbl in self.labels_text_box.dump("1.0", "end", window=True)[::-1]:
+            self.nametowidget(lbl[1]).destroy()
+            self.labels_text_box.delete(lbl[2])
+
     def resize_text_box(self, *args):
         # cleaning old labels:
         for lbl in self.labels_text_box.dump("1.0", "end", window=True)[::-1]:
@@ -192,3 +205,8 @@ class PlaceholderEntry(ttk.Entry):
             return ''
         else:
             return super().get()
+
+    def replace_text(self, text):
+        self.delete(0,'end')
+        self['foreground'] = self.default_fg_color
+        self.insert(0, text)

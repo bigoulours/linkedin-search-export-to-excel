@@ -1,16 +1,18 @@
 import ttkbootstrap as ttk
 from ttkbootstrap.scrolled import ScrolledFrame
 from ttkbootstrap.tooltip import ToolTip
+from tkinter import filedialog
 try:
     from . import utils
-    from .customWidgets import SearchFrame, PlaceholderEntry
+    from .customWidgets import *
 except:
     import utils
-    from customWidgets import SearchFrame, PlaceholderEntry
+    from customWidgets import *
 from tkinter import messagebox
 import threading
 import pandas as pd
 from pandastable import Table, TableModel
+import json
 
 
 class PeopleSearch:
@@ -34,23 +36,41 @@ class PeopleSearch:
         search_fields_frame.pack(side='top', fill='both', expand=True, padx=5)
         search_fields_frame.hide_scrollbars()
 
+        ### Load/Save search
+        load_save_btn_frame = ttk.Frame(search_fields_frame)
+        load_save_btn_frame.pack(pady=5, side='top', fill="x")
+
+        load_search_btn = ttk.Button(load_save_btn_frame, text="Load param.")
+        load_search_btn.pack(side='left')
+        load_search_btn['command'] = self.load_search_config
+
+        save_search_btn = ttk.Button(load_save_btn_frame, text="Save param.")
+        save_search_btn.pack(side='right', padx=10)
+        save_search_btn['command'] = self.save_search_config
+
         ### Connections
         conn_frame = ttk.Frame(search_fields_frame)
         conn_frame.pack(pady=10, side='top', fill='x')
         conn_lbl = ttk.Label(conn_frame, text="Connections")
         conn_lbl.pack(side='left', expand=False)
         ToolTip(conn_lbl, text=f"Degree of Connection with the logged in user.")
-        self.first_con = ttk.BooleanVar()
+
+        first_con = ttk.BooleanVar()
+        second_con = ttk.BooleanVar()
+        third_con = ttk.BooleanVar()
+
+        self.con_dict_list = [
+                {'bool_val': first_con, 'name': 'F'},
+                {'bool_val': second_con, 'name': 'S'},
+                {'bool_val': third_con, 'name': 'O'}
+        ]
+
         ttk.Checkbutton(conn_frame, text="1st",
-            variable=self.first_con, bootstyle="primary").pack(side='left', padx=10)
-
-        self.second_con = ttk.BooleanVar()
+            variable=first_con, bootstyle="primary").pack(side='left', padx=10)
         ttk.Checkbutton(conn_frame, text="2nd",
-            variable=self.second_con, bootstyle="primary").pack(side='left', padx=10)
-
-        self.third_con = ttk.BooleanVar()
+            variable=second_con, bootstyle="primary").pack(side='left', padx=10)
         ttk.Checkbutton(conn_frame, text="3rd+",
-            variable=self.third_con, bootstyle="primary").pack(side='left', padx=10)
+            variable=third_con, bootstyle="primary").pack(side='left', padx=10)
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
@@ -193,6 +213,60 @@ after which you'll only be able to get 3 results per search until the end of the
         ttk.Label(self.status_frame, textvariable=self.status_str).pack(side='left', expand=False)
 
         ttk.Separator(tk_parent, orient='horizontal').pack(side='bottom', fill='x')
+    
+    def save_search_config(self):
+        chosen_file = filedialog.asksaveasfile(mode='w', filetypes=[("JSON", ".json")], defaultextension=".json")
+        if chosen_file is None:
+            return
+        config_dict = {
+            'people_search' : {
+                'connections': [x['name'] for x in self.con_dict_list if x['bool_val'].get()],
+                'connection_of': [[x.lbl_name.get(), x.value] for x in self.conn_of_frame.get_current_selection()],
+                'location' : [[x.lbl_name.get(), x.value] for x in self.loc_frame.get_current_selection()],
+                'current_company' : [[x.lbl_name.get(), x.value] for x in self.current_comp_frame.get_current_selection()],
+                'past_company' : [[x.lbl_name.get(), x.value] for x in self.past_comp_frame.get_current_selection()],
+                'school' : [[x.lbl_name.get(), x.value] for x in self.school_frame.get_current_selection()],
+                'industries' : [[x.lbl_name.get(), x.value] for x in self.industry_frame.get_current_selection()],
+                'general_kw' : self.entry_keywords.get(),
+                'first_name_kw' : self.entry_keywords_first_name.get(),
+                'last_name_kw' : self.entry_keywords_last_name.get(),
+                'title_kw' : self.entry_keywords_title.get(),
+                'company_kw' : self.entry_keywords_company.get(),
+                'school_kw' : self.entry_keywords_school.get(),
+            }
+        }
+        with open(chosen_file.name, 'w') as f:
+            json.dump(config_dict, f, indent=4)
+        
+        self.status_str.set(f"Search config successfully saved at {chosen_file.name}!")
+
+    def load_search_config(self):
+        chosen_file = filedialog.askopenfile(mode='r', filetypes=[("JSON", ".json")], defaultextension=".json")
+        if chosen_file is None:
+            return
+        try:
+            with open(chosen_file.name, 'r') as f:
+                config_dict = json.load(f)
+            config = config_dict['people_search']
+        except:
+            self.status_str.set(f"Please select a valid people search configuration!")
+
+        utils.set_bools_from_list(self.con_dict_list, config['connections'])
+        self.conn_of_frame.load_name_val_from_list(config['connection_of'])
+        self.loc_frame.load_name_val_from_list(config['location'])
+        self.current_comp_frame.load_name_val_from_list(config['current_company'])
+        self.past_comp_frame.load_name_val_from_list(config['past_company'])
+        self.school_frame.load_name_val_from_list(config['school'])
+        self.industry_frame.load_name_val_from_list(config['industries'])
+
+        self.entry_keywords.replace_text(config['general_kw'])
+        self.entry_keywords_first_name.replace_text(config['first_name_kw'])
+        self.entry_keywords_last_name.replace_text(config['last_name_kw'])
+        self.entry_keywords_title.replace_text(config['title_kw'])
+        self.entry_keywords_company.replace_text(config['company_kw'])
+        self.entry_keywords_school.replace_text(config['school_kw'])
+
+        self.status_str.set(f"Config loaded succesfully!")  
 
     def run_search(self):
         self.search_results_df = pd.DataFrame()
@@ -200,22 +274,11 @@ after which you'll only be able to get 3 results per search until the end of the
         self.table.redraw()
         self.status_str.set("Running search...")
         self.parent.update()
-        network_depths = []
-        if self.first_con.get():
-            network_depths.append('F')
-        if self.second_con.get():
-            network_depths.append('S')
-        if self.third_con.get():
-            network_depths.append('O')
-        if self.conn_of_frame.get_current_selection():
-            connection_of = self.conn_of_frame.get_current_selection()[0].value
-        else:
-            connection_of = None
         try:
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
             search_result = self.linkedin_conn[0].search_people(
-                    network_depths=network_depths,
-                    connection_of=connection_of,
+                    network_depths=[x['name'] for x in self.con_dict_list if x['bool_val'].get()],
+                    connection_of=next((x.value for x in self.conn_of_frame.get_current_selection()), None),
                     regions=[x.value for x in self.loc_frame.get_current_selection()],
                     current_company=[x.value for x in self.current_comp_frame.get_current_selection()],
                     past_companies=[x.value for x in self.past_comp_frame.get_current_selection()],

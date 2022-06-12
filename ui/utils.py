@@ -26,6 +26,13 @@ def fit_table_style_to_theme(pdtable: Table, theme_style: Style):
     pdtable.__dict__.update({'cellbackgr':colors.bg,'grid_color':colors.secondary, 'textcolor':colors.inputfg,
                  'rowselectedcolor':colors.secondary, 'colselectedcolor':colors.selectbg})
 
+def set_bools_from_list(bool_dict_list, list):
+    for bool_var in bool_dict_list:
+        if bool_var['name'] in list:
+            bool_var['bool_val'].set(True)
+        else:
+            bool_var['bool_val'].set(False)
+
 def save_dataframe_to_file(dataframe, keep_index=False, json_orient="records"):
     COLUMN_MAX_LENGTH = 200
     chosen_file = filedialog.asksaveasfile(mode='w', filetypes=[("Excel", ".xlsx"), ("HTML", ".html"),
