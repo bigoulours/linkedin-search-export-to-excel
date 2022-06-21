@@ -185,10 +185,38 @@ class JobSearch:
 
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
+        ### On-Site/Remote
+        remote_frame = ttk.Frame(search_fields_frame)
+        remote_frame.pack(side='top', fill="x")
+        remote_frame.grid_columnconfigure(0,weight=0)
+        remote_frame.grid_columnconfigure(1,weight=0)
+        remote_frame.grid_columnconfigure(2,weight=1)
+        ttk.Label(remote_frame, text="On-Site/Remote").grid(row=0, column=0, pady=4, sticky='nwse')
+
+        onsite_bool = ttk.BooleanVar()
+        remote_bool = ttk.BooleanVar()
+        hybrid_bool = ttk.BooleanVar()
+
+        self.remote_dict_list = [
+                {'bool_val': onsite_bool, 'name': '1'},
+                {'bool_val': remote_bool, 'name': '2'},
+                {'bool_val': hybrid_bool, 'name': '3'},
+        ]
+
+        ttk.Checkbutton(remote_frame, text="On-Site",
+                variable=onsite_bool).grid(row=1, column=0, padx=10, pady=4, sticky='nwse')
+        ttk.Checkbutton(remote_frame, text="Remote",
+                variable=remote_bool).grid(row=1, column=1, padx=10, pady=4, sticky='nwse')
+        ttk.Checkbutton(remote_frame, text="Hybrid",
+                variable=hybrid_bool).grid(row=1, column=2, padx=10, pady=4, sticky='nwse')
+        
+        ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
+
         ### Industry frame
         self.industry_frame = SearchFrame(search_fields_frame, title='Industry',
                     fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_industry_urn_ids, x))
         self.industry_frame.pack(side='top', fill="x", pady=5)
+
 
         self.search_paned_window.add(search_fields_canvas)
 
@@ -297,6 +325,9 @@ after which you'll only be able to get 3 results per search until the end of the
         self.table.redraw()
         self.status_str.set("Running search...")
         self.parent.update()
+
+        dbg = [x['name'] for x in self.remote_dict_list if x['bool_val'].get()]
+        dbg2 = [x.lbl_name.get() for x in self.loc_frame.get_current_selection()]
         
         try:
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
@@ -308,6 +339,7 @@ after which you'll only be able to get 3 results per search until the end of the
                     experience=[x['name'] for x in self.exp_dict_list if x['bool_val'].get()],
                     job_type=[x['name'] for x in self.job_type_dict_list if x['bool_val'].get()],
                     geo_urn_ids=[x.value for x in self.loc_frame.get_current_selection()],
+                    workplace_type=[x['name'] for x in self.remote_dict_list if x['bool_val'].get()],
                     industries=[x.value for x in self.industry_frame.get_current_selection()],
                 )
 
