@@ -14,6 +14,7 @@ from tkinter import messagebox
 import threading
 import pandas as pd
 from pandastable import Table, TableModel
+from datetime import datetime
 
 
 class JobSearch:
@@ -344,7 +345,11 @@ after which you'll only be able to get 3 results per search until the end of the
                                             ).get('name', ''),
                             'Location': job_obj['formattedLocation'],
                             'Description': job_obj.get('description', {}).get('text', ''),
-                            'Remote': job_obj['workRemoteAllowed'],
+                            #'Remote': job_obj['workRemoteAllowed'],
+                            'Work Place': job_obj.get('workplaceTypesResolutionResults', {})
+                                            .get('urn:li:fs_workplaceType:1', {})
+                                            .get('localizedName', ''),
+                            'Posted On': datetime.fromtimestamp(job_obj['listedAt']/1000).date(),
                             'LinkedIn Link': f"https://www.linkedin.com/jobs/view/{job_obj['jobPostingId']}",
                             'Direct Link': job_obj.get('applyMethod',{})
                                                  .get('com.linkedin.voyager.jobs.OffsiteApply', {}
