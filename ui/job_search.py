@@ -307,8 +307,8 @@ after which you'll only be able to get 3 results per search until the end of the
                     companies=[x.value for x in self.comp_frame.get_current_selection()],
                     experience=[x['name'] for x in self.exp_dict_list if x['bool_val'].get()],
                     job_type=[x['name'] for x in self.job_type_dict_list if x['bool_val'].get()],
+                    geo_urn_ids=[x.value for x in self.loc_frame.get_current_selection()],
                     industries=[x.value for x in self.industry_frame.get_current_selection()],
-                    location_name=[x.lbl_name.get() for x in self.loc_frame.get_current_selection()],
                 )
 
             if self.quick_search:
