@@ -314,6 +314,19 @@ after which you'll only be able to get 3 results per search until the end of the
 
             if self.quick_search:
                 self.search_results_df = pd.DataFrame(search_result)
+                try:
+                    self.search_results_df.drop(['dashEntityUrn', '$recipeTypes', '$type'],
+                                 axis=1, inplace=True)
+                    self.search_results_df['companyDetails'] = self.search_results_df['companyDetails'].apply(
+                            lambda x: x.get('company', '').rsplit(':', 1)[-1]
+                    )
+                    self.search_results_df.rename(columns={'companyDetails': 'companyUrn'}, inplace=True)
+                    self.search_results_df['entityUrn'] = self.search_results_df['entityUrn'].str.rsplit(':', 1, expand=True)[1]
+                    self.search_results_df['listedAt'] = self.search_results_df['listedAt'].apply(
+                                                            lambda x : datetime.fromtimestamp(x/1000).date()
+                    )
+                except Exception as e:
+                    print(repr(e))
                 self.table.updateModel(TableModel(self.search_results_df))
                 self.table.redraw()
 
