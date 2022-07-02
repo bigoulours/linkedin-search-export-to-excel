@@ -179,6 +179,11 @@ class JobSearch:
         
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
+        ### Location Fallback
+        self.loc_fallback_frame = SearchFrame(search_fields_frame, title='Location Fallback', single_choice=True,
+                    fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_geo_urn_ids, x))
+        self.loc_fallback_frame.pack(side='top', fill="x")
+
         ### Location Frame
         self.loc_frame = SearchFrame(search_fields_frame, title='Location',
                     fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_geo_urn_ids, x))
@@ -298,6 +303,9 @@ after which you'll only be able to get 3 results per search until the end of the
         self.table.redraw()
         self.status_str.set("Running search...")
         self.parent.update()
+        loc_fallback = None
+        if self.loc_fallback_frame.get_current_selection():
+            loc_fallback = self.loc_fallback_frame.get_current_selection()[0].lbl_name.get()
         
         try:
             # see doc under https://linkedin-api.readthedocs.io/en/latest/api.html
@@ -308,6 +316,7 @@ after which you'll only be able to get 3 results per search until the end of the
                     companies=[x.value for x in self.comp_frame.get_current_selection()],
                     experience=[x['name'] for x in self.exp_dict_list if x['bool_val'].get()],
                     job_type=[x['name'] for x in self.job_type_dict_list if x['bool_val'].get()],
+                    location_name = loc_fallback,
                     geo_urn_ids=[x.value for x in self.loc_frame.get_current_selection()],
                     industries=[x.value for x in self.industry_frame.get_current_selection()],
                 )
