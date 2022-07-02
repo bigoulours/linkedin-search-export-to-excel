@@ -74,6 +74,9 @@ class AutocompleteCombobox(ttk.Combobox):
         self.bind('<<ComboboxSelected>>', self.add_selection_to_scrolled_text)
 
     def add_selection_to_scrolled_text(self, event):
+        if self.parent.focus_get() != self:
+            self.set('')
+            return
         curr_sel = self.parent.get_current_selection()
         if self.string_var.get() in [x.lbl_name.get() for x in curr_sel]:
             pass
@@ -86,6 +89,7 @@ class AutocompleteCombobox(ttk.Combobox):
             else:
                 self.scrolled_text.window_create("insert", window=rm_lbl, padx=3, pady=2)
         self.set('')
+        self.parent.focus_set()
         self.parent.resize_text_box()
     
     def autocomplete_fetch(self):
