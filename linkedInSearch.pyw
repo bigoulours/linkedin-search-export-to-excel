@@ -71,15 +71,15 @@ connect_btn['command'] = connect_linkedin
 tab_control = ttk.Notebook(top)
 tab_control.pack(expand=1, fill="both")
 
-# People Search
-people_search_tab = ttk.Frame(tab_control)
-tab_control.add(people_search_tab, text='People Search')
-people_search_instance = PeopleSearch(people_search_tab, linkedin_conn)
-
 # Job Search
 job_search_tab = ttk.Frame(tab_control)
 tab_control.add(job_search_tab, text='Job Search')
 job_search_instance = JobSearch(job_search_tab, linkedin_conn)
+
+# People Search
+people_search_tab = ttk.Frame(tab_control)
+tab_control.add(people_search_tab, text='People Search')
+people_search_instance = PeopleSearch(people_search_tab, linkedin_conn)
 
 top.mainloop()
 
