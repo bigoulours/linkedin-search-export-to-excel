@@ -180,8 +180,9 @@ class JobSearch:
         ttk.Separator(search_fields_frame, orient='horizontal').pack(side='top', fill='x', pady=5)
 
         ### Location Fallback
-        self.loc_fallback_frame = SearchFrame(search_fields_frame, title='Location Fallback', single_choice=True,
-                    fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_geo_urn_ids, x))
+        self.loc_fallback_frame = SearchFrame(search_fields_frame, title='General Location', single_choice=True,
+                    fetch_fct=lambda x: utils.extract_urn_dict_from_query_results(linkedin_conn[0].get_geo_urn_ids, x),
+                    tooltip="Restrict the geographical area of the results. In the browser, your location will be recognized automatically and shown at the top of the search page close to the keyword field.")
         self.loc_fallback_frame.pack(side='top', fill="x")
 
         ### Location Frame
