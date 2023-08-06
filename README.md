@@ -1,5 +1,10 @@
+Update: autocompletion is now broken since Linkedin has changed its backend for typeahead.
+
 This tool allows any LinkedIn user to search for people or jobs with their own credentials.\
-It is based on [linkedin-api](https://github.com/bigoulours/linkedin-api) which uses the LinkedIn Voyager API.\
+It is based on [linkedin-api](https://github.com/bigoulours/linkedin-api) which uses the LinkedIn Voyager API. Install the modified version with:
+```
+pip install lib/linkedin_api
+```
 Install dependencies with:
 ```
 pip install -r requirements.txt
