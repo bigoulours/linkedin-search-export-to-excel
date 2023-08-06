@@ -7,11 +7,13 @@ from pathlib import Path
 from ui.people_search import PeopleSearch
 from ui.job_search import JobSearch
 from linkedin_api import Linkedin
+from linkedin_api.cookie_repository import LinkedinSessionExpired
 from CI.version import SW_VERSION
 
 config = configparser.ConfigParser()
 config.read(f"{Path(__file__).stem}.ini")
 config_dict = {s:dict(config.items(s)) for s in config.sections()}
+cookies_path = config_dict.get('General',{}).get('cookies_dir', 'cookies/')
 
 program_name = Path(__file__).stem + "-" + SW_VERSION
 
@@ -56,8 +58,14 @@ linkedin_conn = [None]
 def connect_linkedin():
     # Authenticate using any Linkedin account credentials
     try:
-        linkedin_conn[0] = Linkedin(entry_usr.get(), entry_pwd.get(),cookies_dir=config_dict.get('General',{}).get('cookies_dir', 'cookies/'))
+        linkedin_conn[0] = Linkedin(entry_usr.get(), entry_pwd.get(),cookies_dir=cookies_path)
         messagebox.showinfo("Success", "Successfully logged into LinkedIn.", icon='info')
+
+    except LinkedinSessionExpired as e:
+        messagebox.showinfo("Error",
+                f"Session expired!\nDelete your cookies at {cookies_path}.",
+                icon='error')
+        return
 
     except Exception as e:
         messagebox.showinfo("Error",
